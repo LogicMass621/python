@@ -24,6 +24,20 @@ class Sprite:
  x = 0
  y = 0
 
+ def movex(self, x):
+  self.x += x
+  if self.x >= screen_width - self.width() :
+   self.x = screen_width - self.width()
+  elif self.x <= 0 :
+   self.x = 0
+
+ def movey(self, y):
+  self.y += y
+  if self.y >= screen_height - self.height() :
+   self.y = screen_height - self.height()
+  elif self.y <= 0:
+   self.y = 0
+
  def width(self):
   return self.image.get_width()
 
@@ -36,10 +50,12 @@ class Sprite:
 
 class Mouse(Sprite):
  image = pygame.image.load('mouse.png')
- 
-
+ direction = 'right'
 
 cat = Sprite()
+mouse = Mouse()
+mouse.x = screen_width-mouse.width()-10
+mouse.y = screen_height-mouse.height()-10
 
 pygame.key.set_repeat(True)
 
@@ -51,27 +67,19 @@ while True: # the main game loop
    sys.exit()
   elif event.type == pygame.KEYDOWN:
    if event.key == pygame.K_LEFT:
-    cat.x -= 10
+    cat.movex(-10)
    if event.key == pygame.K_RIGHT:
-    cat.x += 10
+    cat.movex(10)
    if event.key == pygame.K_UP:
-    cat.y -= 10
+    cat.movey(-10)
    if event.key == pygame.K_DOWN:
-    cat.y += 10
-
-  if cat.x >= screen_width - cat.width() :
-   cat.x = screen_width - cat.width()
-  if cat.y >= screen_height - cat.height() :
-   cat.y = screen_height - cat.height()
-  if cat.x <= 0:
-   cat.x = 0
-  if cat.y <= 0:
-   cat.y = 0
+    cat.movey(10)
 
  print 'cat = {},{}'.format(cat.x, cat.y)
 
  screen.fill(TEAL)
  pygame.draw.circle(screen, ORANGE, (screen_width/2, screen_height/2), 30, 0)
+ mouse.blit(screen)
  cat.blit(screen)
 
  pygame.display.update()
