@@ -12,6 +12,7 @@ screen_width=800
 screen_height=800
 screen = pygame.display.set_mode((screen_width, screen_height), 0, 32)
 pygame.display.set_caption('Animation')
+sprite_speed=10
 
 WHITE = (255, 255, 255)
 BLUE = (33, 135, 203)
@@ -47,10 +48,27 @@ class Sprite:
  def blit(self, surface):
   surface.blit(self.image, (self.x, self.y))
 
-
 class Mouse(Sprite):
  image = pygame.image.load('mouse.png')
  direction = 'right'
+
+ def animate(self):
+  if self.direction == 'right':
+   self.movex(sprite_speed)
+   if self.x >= screen_width - self.width():
+    self.direction = 'down'
+  elif self.direction == 'down':
+   self.movey(sprite_speed)
+   if self.y >= screen_height - self.height():
+    self.direction = 'left'
+  elif self.direction == 'left':
+   self.movex(-sprite_speed)
+   if self.x == 0:
+    self.direction = 'up'
+  elif self.direction == 'up':
+   self.movey(-sprite_speed)
+   if self.y == 0:
+    self.direction = 'right'
 
 cat = Sprite()
 mouse = Mouse()
@@ -67,13 +85,15 @@ while True: # the main game loop
    sys.exit()
   elif event.type == pygame.KEYDOWN:
    if event.key == pygame.K_LEFT:
-    cat.movex(-10)
+    cat.movex(-sprite_speed)
    if event.key == pygame.K_RIGHT:
-    cat.movex(10)
+    cat.movex(sprite_speed)
    if event.key == pygame.K_UP:
-    cat.movey(-10)
+    cat.movey(-sprite_speed)
    if event.key == pygame.K_DOWN:
-    cat.movey(10)
+    cat.movey(sprite_speed)
+
+ mouse.animate()
 
  print 'cat = {},{}'.format(cat.x, cat.y)
 
