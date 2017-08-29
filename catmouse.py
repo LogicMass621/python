@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import pygame, sys
+import pygame, sys, random
 from pygame.locals import *
 
 pygame.init()
@@ -19,6 +19,8 @@ BLUE = (33, 135, 203)
 SILVER = (192, 192, 192)
 TEAL = (0, 128, 128)
 ORANGE = (225, 102, 31)
+
+random.seed()
 
 class Sprite:
  image = pygame.image.load('cat.png')
@@ -51,8 +53,13 @@ class Sprite:
 class Mouse(Sprite):
  image = pygame.image.load('mouse.png')
  direction = 'right'
-
+ counter = 0
+ 
  def animate(self):
+  if self.counter == 0:
+   self.counter = random.randint(5,10)
+   self.direction = self.direction
+
   if self.direction == 'right':
    self.movex(sprite_speed)
    if self.x >= screen_width - self.width():
@@ -70,6 +77,10 @@ class Mouse(Sprite):
    if self.y == 0:
     self.direction = 'right'
 
+  self.counter -= 1
+
+  print 'counter = {}'.format(self.counter)
+ 
 cat = Sprite()
 mouse = Mouse()
 mouse.x = screen_width-mouse.width()-10
