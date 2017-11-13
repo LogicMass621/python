@@ -71,6 +71,15 @@ class Mouse(Sprite):
  counter = 0
  speed = 15
  
+ def __init__(self):
+  Sprite.__init__(self)
+  self.x = screen_width-self.width()-10
+  self.y = screen_height-self.height()-10
+
+ def reset(self):
+  self.x = random.randint(10, screen_width-self.width()-10)
+  self.y = random.randint(10, screen_height-self.height()-10)
+
  def animate(self):
   if self.counter == 0:
    self.counter = random.randint(20,30)
@@ -118,8 +127,6 @@ class Mouse(Sprite):
 
 cat = Sprite()
 mouse = Mouse()
-mouse.x = screen_width-mouse.width()-10
-mouse.y = screen_height-mouse.height()-10
 
 pygame.key.set_repeat(True)
 
@@ -143,6 +150,7 @@ while True: # the main game loop
 
  if cat.collided(mouse):
    points += 1
+   mouse.reset()
 
  print 'cat = {},{} mouse = {},{} points = {}'.format(cat.x, cat.y, mouse.x, mouse.y, points)
 
