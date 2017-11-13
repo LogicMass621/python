@@ -60,6 +60,11 @@ class Sprite:
  def blit(self, surface):
   surface.blit(self.image, (self.x, self.y))
 
+ def collided(self, sprite):
+   rect1 = Rect(self.x, self.y, self.width(), self.height())
+   rect2 = Rect(sprite.x, sprite.y, sprite.width(), sprite.height())
+   return rect1.colliderect(rect2)
+
 class Mouse(Sprite):
  image_path = 'mouse.png'
  direction = Direction.E
@@ -136,7 +141,10 @@ while True: # the main game loop
 
  mouse.animate()
 
- print 'cat = {},{} mouse = {},{}'.format(cat.x, cat.y, mouse.x, mouse.y)
+ if cat.collided(mouse):
+   points += 1
+
+ print 'cat = {},{} mouse = {},{} points = {}'.format(cat.x, cat.y, mouse.x, mouse.y, points)
 
  screen.fill(TEAL)
  pygame.draw.circle(screen, ORANGE, (screen_width/2, screen_height/2), 30, 0)
