@@ -16,6 +16,8 @@ screen_height=800
 screen = pygame.display.set_mode((screen_width, screen_height), 0, 32)
 pygame.display.set_caption('Animation')
 
+points = 0
+
 WHITE = (255, 255, 255)
 BLUE = (33, 135, 203)
 SILVER = (192, 192, 192)
@@ -25,11 +27,16 @@ ORANGE = (225, 102, 31)
 random.seed()
 
 class Sprite:
- image = pygame.image.load('cat.png')
+ image_path = 'cat.png'
  speed=10
  x = 0
  y = 0
 
+ def __init__(self):
+  self.image = pygame.image.load(self.image_path)
+  self.rect = pygame.Rect(0, 0, self.image.get_width(), self.image.get_height())
+  print 'rect = {}'.format(self.rect)
+ 
  def movex(self, x):
   self.x += x
   if self.x >= screen_width - self.width() :
@@ -54,7 +61,7 @@ class Sprite:
   surface.blit(self.image, (self.x, self.y))
 
 class Mouse(Sprite):
- image = pygame.image.load('mouse.png')
+ image_path = 'mouse.png'
  direction = Direction.E
  counter = 0
  speed = 15
