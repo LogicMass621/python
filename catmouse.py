@@ -11,8 +11,8 @@ FPS = 30 # frames per second setting
 fpsClock = pygame.time.Clock()
 
 # set up the window
-screen_width=800
-screen_height=800
+screen_width=1200
+screen_height=1000
 screen = pygame.display.set_mode((screen_width, screen_height), 0, 32)
 pygame.display.set_caption('Animation')
 
@@ -41,15 +41,21 @@ class Sprite:
   self.x += x
   if self.x >= screen_width - self.width() :
    self.x = screen_width - self.width()
+   return False
   elif self.x <= 0 :
    self.x = 0
+   return False
+  return True
 
  def movey(self, y):
   self.y += y
   if self.y >= screen_height - self.height() :
    self.y = screen_height - self.height()
+   return False
   elif self.y <= 0:
    self.y = 0
+   return False
+  return True
 
  def width(self):
   return self.image.get_width()
@@ -89,40 +95,30 @@ class Mouse(Sprite):
   self.counter -= 1
 
   if self.direction == Direction.N:
-   self.movey(-self.speed)
-   if self.y <= 0:
+   if not self.movey(-self.speed):
     self.counter = 0
   elif self.direction == Direction.NE:
-   self.movex(self.speed*2/3)
-   self.movey(-self.speed*2/3)
-   if self.x >= screen_width - self.width() or self.y <= 0:
+   if not self.movex(self.speed*2/3):
+    self.counter = 0
+   if not self.movey(-self.speed*2/3):
     self.counter = 0
   elif self.direction == Direction.E:
-   self.movex(self.speed)
-   if self.x >= screen_width - self.width():
+   if not self.movex(self.speed):
     self.counter = 0
   elif self.direction == Direction.SE:
-   self.movex(self.speed*2/3)
-   self.movey(self.speed*2/3)
-   if self.x >= screen_width - self.width() or self.y >= screen_height - self.height():
+   if (not self.movex(self.speed*2/3)) or (not self.movey(self.speed*2/3)):
     self.counter = 0
   elif self.direction == Direction.S:
-   self.movey(self.speed)
-   if self.y >= screen_height - self.height():
+   if not self.movey(self.speed):
     self.counter = 0
   elif self.direction == Direction.SW:
-   self.movex(-self.speed*2/3)
-   self.movey(self.speed*2/3)
-   if self.x <= 0 or self.y >= screen_height - self.height():
+   if (not self.movex(-self.speed*2/3)) or (not self.movey(self.speed*2/3)):
     self.counter = 0
   elif self.direction == Direction.W:
-   self.movex(-self.speed)
-   if self.x == 0:
+   if not self.movex(-self.speed):
     self.counter = 0
   elif self.direction == Direction.NW:
-   self.movex(-self.speed*2/3)
-   self.movey(-self.speed*2/3)
-   if self.x <= 0 or self.y <= 0:
+   if (not self.movex(-self.speed*2/3)) or (not self.movey(-self.speed*2/3)):
     self.counter = 0
 
 cat = Sprite()
@@ -130,8 +126,10 @@ mouse = Mouse()
 
 pygame.key.set_repeat(True)
 
-while True: # the main game loop
+# MAIN GAME LOOP
+while True:
 
+# 1. GET DATA
  for event in pygame.event.get():
   if event.type == QUIT:
    pygame.quit()
@@ -146,6 +144,7 @@ while True: # the main game loop
    if event.key == pygame.K_DOWN:
     cat.movey(cat.speed)
 
+# 2. PROCESS DATA
  mouse.animate()
 
  if cat.collided(mouse):
@@ -154,6 +153,7 @@ while True: # the main game loop
 
  print 'cat = {},{} mouse = {},{} points = {}'.format(cat.x, cat.y, mouse.x, mouse.y, points)
 
+# 3. OUTPUT DATA
  screen.fill(TEAL)
  pygame.draw.circle(screen, ORANGE, (screen_width/2, screen_height/2), 30, 0)
  mouse.blit(screen)
