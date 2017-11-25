@@ -86,6 +86,18 @@ class Mouse(Sprite):
   self.x = random.randint(10, screen_width-self.width()-10)
   self.y = random.randint(10, screen_height-self.height()-10)
 
+ def movex(self, x):
+  ret = Sprite.movex(self, x)
+  if not ret:
+   self.counter = 0
+  return ret
+
+ def movey(self, y):
+  ret = Sprite.movey(self, y)
+  if not ret:
+   self.counter = 0
+  return ret
+
  def animate(self):
   if self.counter == 0:
    self.counter = random.randint(20,30)
@@ -95,31 +107,25 @@ class Mouse(Sprite):
   self.counter -= 1
 
   if self.direction == Direction.N:
-   if not self.movey(-self.speed):
-    self.counter = 0
+   self.movey(-self.speed)
   elif self.direction == Direction.NE:
-   if not self.movex(self.speed*2/3):
-    self.counter = 0
-   if not self.movey(-self.speed*2/3):
-    self.counter = 0
+   self.movex(self.speed*2/3)
+   self.movey(-self.speed*2/3)
   elif self.direction == Direction.E:
-   if not self.movex(self.speed):
-    self.counter = 0
+   self.movex(self.speed)
   elif self.direction == Direction.SE:
-   if (not self.movex(self.speed*2/3)) or (not self.movey(self.speed*2/3)):
-    self.counter = 0
+   self.movex(self.speed*2/3)
+   self.movey(self.speed*2/3)
   elif self.direction == Direction.S:
-   if not self.movey(self.speed):
-    self.counter = 0
+   self.movey(self.speed)
   elif self.direction == Direction.SW:
-   if (not self.movex(-self.speed*2/3)) or (not self.movey(self.speed*2/3)):
-    self.counter = 0
+   self.movex(-self.speed*2/3)
+   self.movey(self.speed*2/3)
   elif self.direction == Direction.W:
-   if not self.movex(-self.speed):
-    self.counter = 0
+   self.movex(-self.speed)
   elif self.direction == Direction.NW:
-   if (not self.movex(-self.speed*2/3)) or (not self.movey(-self.speed*2/3)):
-    self.counter = 0
+   self.movex(-self.speed*2/3)
+   self.movey(-self.speed*2/3)
 
 cat = Sprite()
 mouse = Mouse()
