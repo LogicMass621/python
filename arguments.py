@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import sys
-print sys.argv
+
 l = len(sys.argv)
 
 for i in range(l):
