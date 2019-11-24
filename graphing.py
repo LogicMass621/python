@@ -1,15 +1,17 @@
 #!/usr/bin/python
 
-import pygame
+import pygame, math
 
 black = [0, 0, 0]
 white = [255, 255, 255]
 
+step = 15
+
 screenWidth = 800
 screenHeight = 800
 
-graphWidth = 100
-graphHeight = 100
+graphWidth = 50
+graphHeight = 50
 
 graphCenterX = 0
 graphCenterY = 0
@@ -24,8 +26,7 @@ MaxX = graphWidth / 2 + graphCenterX
 MinY = -graphHeight/2 + graphCenterY
 MaxY = graphHeight/2 + graphCenterY
 
-print("MinX",MinX,"MaxX",MaxX)
-print("MinY",MinY,"MaxY",MaxY)
+print("MinX",MinX,"MaxX",MaxX,"MinY",MinY,"MaxY",MaxY)
 
 def tran(x,y):
 
@@ -56,9 +57,19 @@ textY = font.render('Y', True, black, white)
 textXWidth = textX.get_width() / sx
 
 def compute_y(x):
-    return x*x-24*x+144
+   return (x * x*2/3) + 20
     
 def render():
+
+    global MinX
+    global MaxX
+    global MinY
+    global MaxY
+
+    MinX = -graphWidth / 2 + graphCenterX
+    MaxX = graphWidth / 2 + graphCenterX
+    MinY = -graphHeight/2 + graphCenterY
+    MaxY = graphHeight/2 + graphCenterY
 
     # x label
     screen.blit(textX, tran(MaxX - textXWidth,0))
@@ -87,6 +98,16 @@ while running:
     event = pygame.event.wait();
     if event.type == pygame.QUIT:
         running = False
+    elif event.type == pygame.KEYDOWN:
+        if event.key == pygame.K_DOWN:
+            graphCenterY = graphCenterY - graphHeight/step
+        if event.key == pygame.K_UP:
+                graphCenterY = graphCenterY + graphHeight/step
+        if event.key == pygame.K_LEFT:
+            graphCenterX = graphCenterX - graphWidth/step
+        if event.key == pygame.K_RIGHT:
+                graphCenterX = graphCenterX + graphWidth/step
+        print("MinX",MinX,"MaxX",MaxX,"MinY",MinY,"MaxY",MaxY)
 
     # clear screen to white
     screen.fill(white)
