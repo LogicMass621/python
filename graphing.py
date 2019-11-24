@@ -8,15 +8,26 @@ white = [255, 255, 255]
 screenWidth = 800
 screenHeight = 800
 
-Min = -screenWidth/2#float(input('What is the lower number in the domain:'))
-Max = screenWidth/2#float(input('What is the higher number in the domain:'))
-interval = 1#float(input('Enter the interval you want to sample:'))
-b = 0#input('Enter the constant in the function:')
-m = 1#input('Enter the coefficent of x:')
+graphWidth = 20
+graphHeight = 20
+
+sx= screenWidth / float(graphWidth)
+sy= screenHeight / float(graphHeight)
+
+Min = -graphWidth / 2
+Max = graphWidth / 2
+interval = 1 / sx
 
 def tran(x,y):
+    
+    # scale
+    x=x*sx
+    y=y*sy
+
+    # transform to screen coordinates
     x = screenWidth/2 + x
     y = screenHeight/2 - y
+    
     return x,y
 
 pygame.init()
@@ -27,43 +38,40 @@ font = pygame.font.Font('freesansbold.ttf', 20)
 screen = pygame.display.set_mode((screenWidth, screenHeight))
 
 textX = font.render('X', True, black, white)
-textRectX = textX.get_rect()
 textY = font.render('Y', True, black, white)
-textRectY = textY.get_rect()
 
+textXWidth = textX.get_width() / sx
 
-
+def compute_y(x):
+    return x*x
+    
 def render():
 
-    screenWidth = screen.get_width()
-    screenHeight = screen.get_height()  
-
     # x label
-    screen.blit(textX, tran(screenHeight/2 - textRectX.width,0))
+    screen.blit(textX, tran(graphHeight/2 - textXWidth,0))
     # y label
-    screen.blit(textY, tran(0,screenWidth/2))
+    screen.blit(textY, tran(0,graphWidth/2))
 
     # x-axis
-    pygame.draw.line(screen,black, tran(-screenWidth/2,0), tran(screenWidth/2,0),1)
+    pygame.draw.line(screen,black, tran(-graphWidth/2,0), tran(graphWidth/2,0),1)
     # y-axis
-    pygame.draw.line(screen,black, tran(0,screenHeight/2),tran(0,-screenHeight/2),1)
+    pygame.draw.line(screen,black, tran(0,graphHeight/2),tran(0,-graphHeight/2),1)
 
     x = Min
-    y = m*x + b
+    y = compute_y(x)
     x2 = x
-    y2 =y
+    y2 = y
         
     while x < Max:
-        y = m*x + b
+        y = compute_y(x)
         pygame.draw.line(screen,black, tran(x2,y2) , tran(x,y) ,1)
         x2 = x
-        y2 =y
+        y2 = y
         x = x + interval
 
 running = True
 while running:
     event = pygame.event.wait();
-    #print(event)
     if event.type == pygame.QUIT:
         running = False
 
