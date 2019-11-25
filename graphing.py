@@ -55,10 +55,10 @@ textXWidth = textX.get_width() / sx
 
 
 def compute_y(x):
-   return 2*x*x + 4
+   return math.sin(x)
 
-graphX = graphCenterX
-y3 = compute_y(graphX)
+traceX = graphCenterX
+traceY = compute_y(traceX)
 trace = False
 
 def render():
@@ -92,8 +92,8 @@ def render():
     global trace
 
     if trace == True:
-        print(graphX,y3)
-        pygame.draw.circle(screen,black,tran(graphX,y3),5)
+        print("trace",traceX,traceY)
+        pygame.draw.circle(screen,black,tran(traceX,traceY),5)
 
     x = MinX
     y = compute_y(x)
@@ -108,9 +108,10 @@ def render():
         x = x + interval
 
 running = True
+pygame.key.set_repeat(5,5)
 while running:
     event = pygame.event.wait();
-    print('event',event)
+    #print('event',event)
     if event.type == pygame.QUIT:
         running = False
     elif event.type == pygame.KEYDOWN:
@@ -136,13 +137,13 @@ while running:
             trace = False
         if event.key == pygame.K_LEFT:
             global self
-            graphX = graphX - step
-            y3 = compute_y(graphX)
+            traceX = traceX - step
+            traceY = compute_y(traceX)
             trace = True
         if event.key == pygame.K_RIGHT:
             global self
-            graphX = graphX + step
-            y3 = compute_y(graphX)
+            traceX = traceX + step
+            traceY = compute_y(traceX)
             trace = True
 
 
