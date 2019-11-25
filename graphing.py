@@ -5,11 +5,11 @@ import pygame, math
 black = [0, 0, 0]
 white = [255, 255, 255]
 
-screenWidth = 800
-screenHeight = 800
+screenWidth = 1200
+screenHeight = 1200
 
-graphWidth = 50
-graphHeight = 50
+graphWidth = 100
+graphHeight = 100
 
 graphCenterX = 0
 graphCenterY = 0
@@ -55,10 +55,12 @@ textXWidth = textX.get_width() / sx
 
 
 def compute_y(x):
-   return 2*x*x + 4
+   return x*x*x+10
 
 graphX = graphCenterX
 y3 = compute_y(graphX)
+coordinates = str((graphX,y3))
+textPos = font.render(coordinates,True,black,white)
 trace = False
 
 def render():
@@ -70,6 +72,9 @@ def render():
 
     global sx
     global sy
+    sx= screenWidth / float(graphWidth)
+    sy= screenHeight / float(graphHeight)
+    textXWidth = textX.get_width() / sx
     global graphWidth
     global graphHeight
 
@@ -83,17 +88,19 @@ def render():
     screen.blit(textX, tran(MaxX - textXWidth,0))
     # y label
     screen.blit(textY, tran(0,MaxY))
+    #trace mode - prints position
+    coordinates = str((round(graphX,2),round(y3,2)))
+    textPos = font.render(coordinates,True,black,white)
+    textTraceWidth = textPos.get_width() / sx
+    textTrace = MaxX - textTraceWidth
+    screen.blit(textPos,tran(textTrace,MaxY))
 
     # x-axis
     pygame.draw.line(screen,black, tran(MinX,0), tran(MaxX,0),1)
     # y-axis
     pygame.draw.line(screen,black, tran(0,MinY),tran(0,MaxY),1)
 
-    global trace
-
-    if trace == True:
-        print(graphX,y3)
-        pygame.draw.circle(screen,black,tran(graphX,y3),5)
+    pygame.draw.circle(screen,black,tran(graphX,y3),5)
 
     x = MinX
     y = compute_y(x)
@@ -102,7 +109,7 @@ def render():
         
     while x < MaxX:
         y = compute_y(x)
-        pygame.draw.aaline(screen,black, tran(x2,y2) , tran(x,y) ,1)
+        pygame.draw.line(screen,black, tran(x2,y2) , tran(x,y) ,1)
         x2 = x
         y2 = y
         x = x + interval
@@ -115,35 +122,26 @@ while running:
         running = False
     elif event.type == pygame.KEYDOWN:
         if event.key == pygame.K_s:
-            graphCenterY = graphCenterY - step
-            trace = False
+            graphCenterY = graphCenterY - step*20
         if event.key == pygame.K_w:
-           graphCenterY = graphCenterY + step
-           trace = False
+           graphCenterY = graphCenterY + step*20
         if event.key == pygame.K_a:
-            graphCenterX = graphCenterX - step
-            trace = False
+            graphCenterX = graphCenterX - step*20
         if event.key == pygame.K_d:
-            graphCenterX = graphCenterX + step
-            trace = False
+            graphCenterX = graphCenterX + step*20
         if event.key == pygame.K_EQUALS:
-            graphWidth = graphWidth + step
-            graphHeight = graphHeight + step
+            graphWidth = graphWidth + step*10
+            graphHeight = graphHeight + step*10
             trace = False
         if event.key == pygame.K_MINUS:
-            graphWidth = graphWidth - step
-            graphHeight = graphHeight - step
-            trace = False
+            graphWidth = graphWidth - step*10
+            graphHeight = graphHeight - step*10
         if event.key == pygame.K_LEFT:
-            global self
-            graphX = graphX - step
+            graphX = graphX - step*2
             y3 = compute_y(graphX)
-            trace = True
         if event.key == pygame.K_RIGHT:
-            global self
-            graphX = graphX + step
+            graphX = graphX + step*2
             y3 = compute_y(graphX)
-            trace = True
 
 
     # clear screen to white
