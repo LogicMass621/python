@@ -57,9 +57,9 @@ textXWidth = textX.get_width() / sx
 def compute_y(x):
    return x*x*x+10
 
-graphX = graphCenterX
-y3 = compute_y(graphX)
-coordinates = str((graphX,y3))
+traceX = graphCenterX
+traceY = compute_y(traceX)
+coordinates = str((traceX,traceY))
 textPos = font.render(coordinates,True,black,white)
 trace = False
 
@@ -89,7 +89,7 @@ def render():
     # y label
     screen.blit(textY, tran(0,MaxY))
     #trace mode - prints position
-    coordinates = str((round(graphX,2),round(y3,2)))
+    coordinates = str((round(traceX,2),round(traceY,2)))
     textPos = font.render(coordinates,True,black,white)
     textTraceWidth = textPos.get_width() / sx
     textTrace = MaxX - textTraceWidth
@@ -100,7 +100,12 @@ def render():
     # y-axis
     pygame.draw.line(screen,black, tran(0,MinY),tran(0,MaxY),1)
 
-    pygame.draw.circle(screen,black,tran(graphX,y3),5)
+    global trace
+
+    if trace == True:
+        print("trace",traceX,traceY)
+        pygame.draw.circle(screen,black,tran(traceX,traceY),5)
+
 
     x = MinX
     y = compute_y(x)
@@ -115,9 +120,10 @@ def render():
         x = x + interval
 
 running = True
+pygame.key.set_repeat(5,5)
 while running:
     event = pygame.event.wait();
-    print('event',event)
+    #print('event',event)
     if event.type == pygame.QUIT:
         running = False
     elif event.type == pygame.KEYDOWN:
@@ -137,12 +143,15 @@ while running:
             graphWidth = graphWidth - step*10
             graphHeight = graphHeight - step*10
         if event.key == pygame.K_LEFT:
-            graphX = graphX - step*2
-            y3 = compute_y(graphX)
+            global self
+            traceX = traceX - step
+            traceY = compute_y(traceX)
+            trace = True
         if event.key == pygame.K_RIGHT:
-            graphX = graphX + step*2
-            y3 = compute_y(graphX)
-
+            global self
+            traceX = traceX + step
+            traceY = compute_y(traceX)
+            trace = True
 
     # clear screen to white
     screen.fill(white)
