@@ -2,6 +2,9 @@
 
 import pygame, math
 
+def compute_y(x):
+   return math.tan(x)
+
 black = [0, 0, 0]
 white = [255, 255, 255]
 
@@ -20,10 +23,23 @@ sy= screenHeight / float(graphHeight)
 interval = 1 / sx
 step = interval*3
 
-MinX = -graphWidth / 2 + graphCenterX
-MaxX = graphWidth / 2 + graphCenterX
-MinY = -graphHeight/2 + graphCenterY
-MaxY = graphHeight/2 + graphCenterY
+
+pygame.init()
+pygame.font.init()
+pygame.display.set_caption('Graph')
+
+font = pygame.font.Font('freesansbold.ttf', 20)
+screen = pygame.display.set_mode((screenWidth, screenHeight))
+
+textX = font.render('X', True, black, white)
+textY = font.render('Y', True, black, white)
+
+textXWidth = textX.get_width() / sx
+
+traceX = graphCenterX
+traceY = compute_y(traceX)
+coordinates = str((traceX,traceY))
+textPos = font.render(coordinates,True,black,white)
 
 def tran(x,y):
 
@@ -41,48 +57,31 @@ def tran(x,y):
     
     return int(x),int(y)
 
-pygame.init()
-pygame.font.init()
-pygame.display.set_caption('Graph')
-
-font = pygame.font.Font('freesansbold.ttf', 20)
-screen = pygame.display.set_mode((screenWidth, screenHeight))
-
-textX = font.render('X', True, black, white)
-textY = font.render('Y', True, black, white)
-
-textXWidth = textX.get_width() / sx
-
-
-def compute_y(x):
-   return x*x*x+10
-
-traceX = graphCenterX
-traceY = compute_y(traceX)
-coordinates = str((traceX,traceY))
-textPos = font.render(coordinates,True,black,white)
-trace = False
-
 def render():
     
     global MinX
     global MaxX
     global MinY
     global MaxY
-
     global sx
     global sy
+    global graphWidth
+    global graphHeight
+    global interval
+
+    print("render",graphWidth,graphHeight,interval)
+    
     sx= screenWidth / float(graphWidth)
     sy= screenHeight / float(graphHeight)
     textXWidth = textX.get_width() / sx
-    global graphWidth
-    global graphHeight
-
     
     MinX = -graphWidth/2 + graphCenterX
     MaxX = graphWidth/2 + graphCenterX
     MinY = -graphHeight/2 + graphCenterY
     MaxY = graphHeight/2 + graphCenterY
+
+    interval = 1 / sx
+    step = interval*3
 
     # x label
     screen.blit(textX, tran(MaxX - textXWidth,0))
@@ -100,12 +99,7 @@ def render():
     # y-axis
     pygame.draw.line(screen,black, tran(0,MinY),tran(0,MaxY),1)
 
-    global trace
-
-    if trace == True:
-        print("trace",traceX,traceY)
-        pygame.draw.circle(screen,black,tran(traceX,traceY),5)
-
+    pygame.draw.circle(screen,black,tran(traceX,traceY),5)
 
     x = MinX
     y = compute_y(x)
@@ -120,7 +114,7 @@ def render():
         x = x + interval
 
 running = True
-pygame.key.set_repeat(5,5)
+pygame.key.set_repeat(100,100)
 while running:
     event = pygame.event.wait();
     #print('event',event)
@@ -136,22 +130,19 @@ while running:
         if event.key == pygame.K_d:
             graphCenterX = graphCenterX + step*20
         if event.key == pygame.K_EQUALS:
-            graphWidth = graphWidth + step*10
-            graphHeight = graphHeight + step*10
-            trace = False
+            graphWidth = graphWidth * step
+            graphHeight = graphHeight * step
         if event.key == pygame.K_MINUS:
-            graphWidth = graphWidth - step*10
-            graphHeight = graphHeight - step*10
+            graphWidth = graphWidth / step
+            graphHeight = graphHeight / step
         if event.key == pygame.K_LEFT:
             global self
             traceX = traceX - step
             traceY = compute_y(traceX)
-            trace = True
         if event.key == pygame.K_RIGHT:
             global self
             traceX = traceX + step
             traceY = compute_y(traceX)
-            trace = True
 
     # clear screen to white
     screen.fill(white)
