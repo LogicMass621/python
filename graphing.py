@@ -142,13 +142,14 @@ while running:
             graphWidth = graphWidth / step
             graphHeight = graphHeight / step
         if event.key == pygame.K_LEFT:
-            global self
             traceX = traceX - 1*graphWidth/100
             traceY = compute_y(traceX)
         if event.key == pygame.K_RIGHT:
-            global self
             traceX = traceX + 1*graphWidth/100
             traceY = compute_y(traceX)
+        if event.key == pygame.K_SPACE:
+            graphCenterX = traceX
+            graphCenterY = traceY
 
     # clear screen to white
     screen.fill(white)
