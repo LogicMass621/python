@@ -4,7 +4,7 @@ import pygame
 import math
 
 def compute_y(x):
-    return math.cos(x)
+    return x
 
 black = [0, 0, 0]
 red = [255, 0, 0]
@@ -72,6 +72,7 @@ def tran(x, y):
 
 
 def render():
+    print("render")
     global sx
     global sy
     global moveIncrement
@@ -96,19 +97,30 @@ def render():
     # y label
     screen.blit(textY, tran(0, MaxY))
 
+    print("gridExp",
+          graphWidth,
+          math.log(graphWidth,10),
+          math.floor(math.log(graphWidth,10))-1)
+    
+    gridExp = math.floor(math.log(graphWidth,10))-1
+    gridFactor = math.pow(10,gridExp)
+
+    print("gridFactor",gridExp,gridFactor)
+    
+    # vertical grid lines
+    gridX = round(MinX/gridFactor, 0) * gridFactor
+    while gridX < MaxX:
+        #print("gridX",gridX,MinY,MaxY)
+        pygame.draw.line(screen, gridColor, tran(
+            gridX, MinY), tran(gridX, MaxY), 1)
+        gridX = gridX + gridFactor
+
     # horizontal grid lines
-    gridY = round(MinY, 0)
+    gridY = round(MinY/gridFactor, 0) * gridFactor
     while gridY < MaxY:
         pygame.draw.line(screen, gridColor, tran(
             MinX, gridY), tran(MaxX, gridY), 1)
-        gridY = gridY + 1
-
-    # vertical grid lines
-    gridX = round(MinX, 0)
-    while gridX < MaxX:
-        pygame.draw.line(screen, gridColor, tran(
-            gridX, MinY), tran(gridX, MaxY), 1)
-        gridX = gridX + 1
+        gridY = gridY + gridFactor
 
     # x-axis
     pygame.draw.line(screen, axisColor, tran(MinX, 0), tran(MaxX, 0), 1)
@@ -125,7 +137,7 @@ def render():
     # prints zoom amount
     zoomAmount = graphWidth/initialWidth
     textZoom = font.render(
-        'Zoom: '+str(round(zoomAmount, 4)), True, black, white)
+        'Zoom: '+str(zoomAmount), True, black, white)
     textZoomWidth = textZoom.get_width() / sx
     textZoomX = MaxX - textZoomWidth
     textZoomY = MaxY - textTraceHeight
