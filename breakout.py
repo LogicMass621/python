@@ -4,21 +4,61 @@ import math
 import sys
 
 class Rect:
+    
     def __init__(self, x:float, y:float, width:int, height:int):
-        self.x = float(x)
-        self.y = float(y)
-        self.width = width
-        self.height = height
+        self.__x = float(x)
+        self.__y = float(y)
+        self.__width = width
+        self.__height = height
+        self.__pygRect = pygame.Rect(self.__x,self.__y,self.__width,self.__height)
+        
     def __str__(self):
-        return 'x: {} y: {} width: {} height: {}'.format(self.x, self.y, self.width, self.height)
+        return 'x: {} y: {} width: {} height: {}'.format(self.__x, self.__y, self.__width, self.__height)
+
+    @property
+    def x(self):
+        return self.__x
+
+    @x.setter
+    def x(self,x):
+        self.__x = float(x)
+        self.__pygRect.x = self.__x
+
+    @property
+    def y(self):
+        return self.__y
+
+    @y.setter
+    def y(self,y):
+        self.__y = float(y)
+        self.__pygRect.y = self.__y
+
+    @property
+    def width(self):
+        return self.__width
+
+    @property
+    def height(self):
+        return self.__height
+    
     def colliderect(self,other):
         if self.x+self.width >=other.x and \
             other.x+other.width>=self.x and \
             self.y+self.height >=other.y and \
             other.y+other.height>=self.y:
             return True
+
+    def rectintersection(self,other):
+        x5=max(self.x,other.x)
+        x6=min(self.x+self.width,other.x+other.width)
+        y5=max(self.y,other.y)
+        y6=min(self.y+self.height,other.y+other.height)
+        if x5>=x6 or y5>=y6:
+            return Rect(0,0,0,0)
+        return Rect(x5,y5,x6-x5,y6-y5)
+
     def toPygame(self):
-        return pygame.Rect(self.x,self.y,self.width,self.height)
+        return self.__pygRect
     
 pygame.init()
 
@@ -48,20 +88,11 @@ stepStrength = 20.0
 
 points = 0
 blocks = []
-i = 20
+i = 30
 
-while i<screenWidth-20:
-    blocks.append(Rect(i,40,20,20))
-    i += 40
-
-def rectintersection(r1,r2):
-    x5=max(r1.x,r2.x)
-    x6=min(r1.x+r1.width,r2.x+r2.width)
-    y5=max(r1.y,r2.y)
-    y6=min(r1.y+r1.height,r2.y+r2.height)
-    if x5>=x6 or y5>=y6:
-        return Rect(0,0,0,0)
-    return Rect(x5,y5,x6-x5,y6-y5)
+while i<screenWidth-30:
+    blocks.append(Rect(i,80,20,20))
+    i += 50
 
 def render():
     global ballRect
@@ -75,7 +106,7 @@ def render():
 
     i = len(blocks)-1
     while i >= 0:
-        rect = rectintersection(blocks[i],ballRect)
+        rect = ballRect.rectintersection(blocks[i])
         if rect.width>0 or rect.height > 0:
             print('block collision',ballRect,blocks[i],rect)
             blocks.pop(i)
