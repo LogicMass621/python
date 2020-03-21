@@ -101,7 +101,7 @@ def block_hit():
     blockHit.play()
 
 
-def paddle_wall_hit():
+def play_hit_sound():
     stop_sounds()
     paddleHit.play()
 
@@ -174,15 +174,15 @@ class GameScreen(Screen):
 
     ballSize = 20
 
-    y_step = 12
-    x_step = 0
     stepStrength = 20.0
-
-    points = 0
 
     def __init__(self):
         self.ball_rect = Rect((screenWidth-self.ballSize)/2,
                               screenHeight/2, self.ballSize, self.ballSize)
+        self.points = 0
+        self.speed = 6
+        self.y_step = self.speed
+        self.x_step = 0
 
         self.blocks = []
         i = 30
@@ -204,11 +204,13 @@ class GameScreen(Screen):
         self.ball_rect.x += self.x_step
         while i >= 0:
             rect = self.ball_rect.rectintersection(self.blocks[i])
+
             if rect.width > 0 or rect.height > 0:
 
                 self.blocks.pop(i)
                 self.points += 10
                 block_hit()
+
                 if rect.width > rect.height:
                     self.y_step = -self.y_step
                 else:
@@ -224,11 +226,12 @@ class GameScreen(Screen):
         surface.blit(textScore, (textScoreX, textScoreY))
 
         if self.paddleRect.colliderect(self.ball_rect):
-            self.y_step = -self.y_step
+            play_hit_sound()
             ballMidPoint = self.ball_rect.x+self.ballSize/2
             paddleMidPoint = self.paddleRect.x+self.paddleRectWidth/2
             self.x_step += (ballMidPoint - paddleMidPoint)/self.stepStrength
-            paddle_wall_hit()
+            self.y_step = - \
+                math.sqrt(abs(self.speed*self.speed - self.x_step*self.x_step))
 
         if self.ball_rect.y + self.ballSize > screenHeight:
             screens.pop()
@@ -237,17 +240,17 @@ class GameScreen(Screen):
         if self.ball_rect.y < 0:
             self.ball_rect.y = 0
             self.y_step = -self.y_step
-            paddle_wall_hit()
+            play_hit_sound()
 
         if self.ball_rect.x < 0:
             self.ball_rect.x = 0
             self.x_step = -self.x_step
-            paddle_wall_hit()
+            play_hit_sound()
 
         if self.ball_rect.x + self.ballSize > screenWidth:
             self.ball_rect.x = screenWidth-self.ball_rect.width
             self.x_step = -self.x_step
-            paddle_wall_hit()
+            play_hit_sound()
 
         pygame.draw.rect(surface, teal, self.paddleRect.toPygame())
         pygame.draw.rect(surface, green, self.ball_rect.toPygame())
