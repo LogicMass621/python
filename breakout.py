@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 import pygame
 import math
 import sys
@@ -52,13 +51,13 @@ class Rect:
             return True
 
     def rectintersection(self, other):
-        x5 = max(self.x, other.x)
-        x6 = min(self.x+self.width, other.x+other.width)
-        y5 = max(self.y, other.y)
-        y6 = min(self.y+self.height, other.y+other.height)
-        if x5 >= x6 or y5 >= y6:
+        x1 = max(self.x, other.x)
+        x2 = min(self.x+self.width, other.x+other.width)
+        y1 = max(self.y, other.y)
+        y2 = min(self.y+self.height, other.y+other.height)
+        if x1 >= x2 or y1 >= y2:
             return Rect(0, 0, 0, 0)
-        return Rect(x5, y5, x6-x5, y6-y5)
+        return Rect(x1, y1, x2-x1, y2-y1)
 
     def toPygame(self):
         return self.__pyg_rect
@@ -87,23 +86,16 @@ surface = pygame.display.set_mode((screenWidth, screenHeight))
 
 screens = []
 pygame.mouse.set_visible(False)
-blockHit = pygame.mixer.Sound('beep-02.wav')
-paddleHit = pygame.mixer.Sound('beep-02.wav')
+hit_sound = pygame.mixer.Sound('beep-02.wav')
 
 
 def stop_sounds():
-    blockHit.stop()
-    paddleHit.stop()
-
-
-def block_hit():
-    stop_sounds()
-    blockHit.play()
+    hit_sound.stop()
 
 
 def play_hit_sound():
     stop_sounds()
-    paddleHit.play()
+    hit_sound.play()
 
 
 class Screen:
@@ -180,8 +172,8 @@ class GameScreen(Screen):
         self.ball_rect = Rect((screenWidth-self.ballSize)/2,
                               screenHeight/2, self.ballSize, self.ballSize)
         self.points = 0
-        self.speed = 6
-        self.y_step = self.speed
+        self.max_x_step = 6
+        self.y_step = 6
         self.x_step = 0
 
         self.blocks = []
@@ -209,7 +201,7 @@ class GameScreen(Screen):
 
                 self.blocks.pop(i)
                 self.points += 10
-                block_hit()
+                play_hit_sound()
 
                 if rect.width > rect.height:
                     self.y_step = -self.y_step
@@ -227,11 +219,19 @@ class GameScreen(Screen):
 
         if self.paddleRect.colliderect(self.ball_rect):
             play_hit_sound()
+
+            paddleHalfWidth = self.paddleRectWidth/2
             ballMidPoint = self.ball_rect.x+self.ballSize/2
-            paddleMidPoint = self.paddleRect.x+self.paddleRectWidth/2
-            self.x_step += (ballMidPoint - paddleMidPoint)/self.stepStrength
-            self.y_step = - \
-                math.sqrt(abs(self.speed*self.speed - self.x_step*self.x_step))
+            paddleMidPoint = self.paddleRect.x+paddleHalfWidth
+
+            self.x_step += (ballMidPoint - paddleMidPoint) / paddleHalfWidth
+            self.x_step = max(
+                min(self.x_step, self.max_x_step), -self.max_x_step)
+
+            self.y_step = -self.y_step
+
+            print('velocity', self.x_step, self.y_step,
+                  math.sqrt(self.x_step*self.x_step + self.y_step*self.y_step))
 
         if self.ball_rect.y + self.ballSize > screenHeight:
             screens.pop()
