@@ -2,7 +2,6 @@ import pygame
 import math
 import sys
 
-
 class Rect:
 
     def __init__(self, x: float, y: float, width: int, height: int):
@@ -62,41 +61,12 @@ class Rect:
     def toPygame(self):
         return self.__pyg_rect
 
-
-pygame.mixer.pre_init(22050, -16, 2, 512)
-pygame.init()
-pygame.font.init()
-
-print('PyGame Version', pygame.version.ver)
-print('SDL Version', pygame.get_sdl_version())
-
-screenWidth = 800
-screenHeight = 800
-
-white = (255, 255, 255)
-black = (0, 0, 0)
-blue = (0, 0, 255)
-red = (255, 7, 58)
-green = (50, 255, 50)
-teal = (0, 255, 255)
-
-pygame.display.set_caption('Breakout!')
-
-surface = pygame.display.set_mode((screenWidth, screenHeight))
-
-screens = []
-pygame.mouse.set_visible(False)
-hit_sound = pygame.mixer.Sound('beep-02.wav')
-
-
 def stop_sounds():
     hit_sound.stop()
-
 
 def play_hit_sound():
     stop_sounds()
     hit_sound.play()
-
 
 class Screen:
     def render(self):
@@ -105,18 +75,19 @@ class Screen:
     def handleEvent(self, event):
         return
 
-
 class StartScreen(Screen):
-    largeFont = pygame.font.Font('freesansbold.ttf', 80)
-    font = pygame.font.Font('freesansbold.ttf', 20)
 
-    textBreakout = largeFont.render('BREAKOUT', True, teal, black)
-    textBreakoutX = screenWidth/2-textBreakout.get_width()/2
-    textBreakoutY = screenHeight/3
+    def __init__(self):
+        self.largeFont = pygame.font.Font('freesansbold.ttf', 80)
+        self.font = pygame.font.Font('freesansbold.ttf', 20)
 
-    textStart = font.render('Press SPACE to start', True, teal, black)
-    textStartX = screenWidth/2-textStart.get_width()/2
-    textStartY = screenHeight/2-textStart.get_height()/2
+        self.textBreakout = self.largeFont.render('BREAKOUT', True, teal, black)
+        self.textBreakoutX = screenWidth/2-self.textBreakout.get_width()/2
+        self.textBreakoutY = screenHeight/3
+
+        self.textStart = self.font.render('Press SPACE to start', True, teal, black)
+        self.textStartX = screenWidth/2-self.textStart.get_width()/2
+        self.textStartY = screenHeight/2-self.textStart.get_height()/2
 
     def render(self):
         surface.fill(black)
@@ -134,10 +105,10 @@ class StartScreen(Screen):
                 screens.append(GameScreen())
         return True
 
-
 class EndScreen(Screen):
 
-    font = pygame.font.Font('freesansbold.ttf', 60)
+    def __init__(self):
+        self.font = pygame.font.Font('freesansbold.ttf', 60)
 
     def render(self):
         surface.fill(black)
@@ -153,22 +124,26 @@ class EndScreen(Screen):
                 screens.pop()
         return True
 
+class GameLevel():
+
+    def __init__(self):
+        self.blocks = []
+        return
 
 class GameScreen(Screen):
 
-    font = pygame.font.Font('freesansbold.ttf', 20)
-    largeFont = pygame.font.Font('freesansbold.ttf', 60)
-
-    paddleRectWidth = screenWidth/10
-    paddleRect = Rect(screenWidth*0.5-paddleRectWidth*0.5,
-                      screenHeight*0.9, paddleRectWidth, screenHeight/75)
-    paddleMoveSpeed = paddleRectWidth/4
-
-    ballSize = 20
-
-    stepStrength = 20.0
-
     def __init__(self):
+
+        self.font = pygame.font.Font('freesansbold.ttf', 20)
+        self.largeFont = pygame.font.Font('freesansbold.ttf', 60)
+
+        self.paddleRectWidth = screenWidth/10
+        self.paddleRect = Rect(screenWidth*0.5-self.paddleRectWidth*0.5,
+                        screenHeight*0.9, self.paddleRectWidth, screenHeight/75)
+        self.paddleMoveSpeed = self.paddleRectWidth/4
+
+        self.ballSize = 20
+
         self.ball_rect = Rect((screenWidth-self.ballSize)/2,
                               screenHeight/2, self.ballSize, self.ballSize)
         self.points = 0
@@ -230,9 +205,6 @@ class GameScreen(Screen):
 
             self.y_step = -self.y_step
 
-            print('velocity', self.x_step, self.y_step,
-                  math.sqrt(self.x_step*self.x_step + self.y_step*self.y_step))
-
         if self.ball_rect.y + self.ballSize > screenHeight:
             screens.pop()
             return False
@@ -274,7 +246,32 @@ class GameScreen(Screen):
         return True
 
 
+pygame.mixer.pre_init(22050, -16, 2, 512)
+pygame.init()
+pygame.font.init()
 pygame.key.set_repeat(50, 0)
+
+print('PyGame Version', pygame.version.ver)
+print('SDL Version', pygame.get_sdl_version())
+
+screenWidth = 800
+screenHeight = 800
+
+white = (255, 255, 255)
+black = (0, 0, 0)
+blue = (0, 0, 255)
+red = (255, 7, 58)
+green = (50, 255, 50)
+teal = (0, 255, 255)
+
+pygame.display.set_caption('Breakout!')
+
+surface = pygame.display.set_mode((screenWidth, screenHeight))
+
+screens = []
+pygame.mouse.set_visible(False)
+hit_sound = pygame.mixer.Sound('beep-02.wav')
+
 screens.append(StartScreen())
 
 clock = pygame.time.Clock()
