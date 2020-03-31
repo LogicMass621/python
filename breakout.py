@@ -2,6 +2,7 @@ import pygame
 import math
 import sys
 
+
 class Rect:
 
     def __init__(self, x: float, y: float, width: int, height: int):
@@ -61,12 +62,15 @@ class Rect:
     def toPygame(self):
         return self.__pyg_rect
 
+
 def stop_sounds():
     hit_sound.stop()
+
 
 def play_hit_sound():
     stop_sounds()
     hit_sound.play()
+
 
 class Screen:
     def render(self):
@@ -75,17 +79,20 @@ class Screen:
     def handleEvent(self, event):
         return
 
+
 class StartScreen(Screen):
 
     def __init__(self):
         self.largeFont = pygame.font.Font('freesansbold.ttf', 80)
         self.font = pygame.font.Font('freesansbold.ttf', 20)
 
-        self.textBreakout = self.largeFont.render('BREAKOUT', True, teal, black)
+        self.textBreakout = self.largeFont.render(
+            'BREAKOUT', True, teal, black)
         self.textBreakoutX = screenWidth/2-self.textBreakout.get_width()/2
         self.textBreakoutY = screenHeight/3
 
-        self.textStart = self.font.render('Press SPACE to start', True, teal, black)
+        self.textStart = self.font.render(
+            'Press SPACE to start', True, teal, black)
         self.textStartX = screenWidth/2-self.textStart.get_width()/2
         self.textStartY = screenHeight/2-self.textStart.get_height()/2
 
@@ -102,8 +109,9 @@ class StartScreen(Screen):
     def handleEvent(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
-                screens.append(GameScreen())
+                screens.append(GameScreen(levels[0]))
         return True
+
 
 class EndScreen(Screen):
 
@@ -124,22 +132,37 @@ class EndScreen(Screen):
                 screens.pop()
         return True
 
+
 class GameLevel():
 
     def __init__(self):
-        self.blocks = []
+        self.__blocks = []
+        self.__level = 1
         return
+
+    def set_blocks(self, blocks):
+        self.__blocks = blocks
+
+    def get_blocks(self):
+        return self.__blocks.copy()
+
+    def set_level(self, level):
+        self.__level = level
+
+    def get_level(self):
+        return __level
+
 
 class GameScreen(Screen):
 
-    def __init__(self):
+    def __init__(self, level: GameLevel):
 
         self.font = pygame.font.Font('freesansbold.ttf', 20)
         self.largeFont = pygame.font.Font('freesansbold.ttf', 60)
 
         self.paddleRectWidth = screenWidth/10
         self.paddleRect = Rect(screenWidth*0.5-self.paddleRectWidth*0.5,
-                        screenHeight*0.9, self.paddleRectWidth, screenHeight/75)
+                               screenHeight*0.9, self.paddleRectWidth, screenHeight/75)
         self.paddleMoveSpeed = self.paddleRectWidth/4
 
         self.ballSize = 20
@@ -151,11 +174,7 @@ class GameScreen(Screen):
         self.y_step = 6
         self.x_step = 0
 
-        self.blocks = []
-        i = 30
-        while i < screenWidth-30:
-            self.blocks.append(Rect(i, 80, 20, 20))
-            i += 50
+        self.blocks = level.get_blocks()
 
     def render(self):
 
@@ -268,9 +287,20 @@ pygame.display.set_caption('Breakout!')
 
 surface = pygame.display.set_mode((screenWidth, screenHeight))
 
+levels = []
 screens = []
 pygame.mouse.set_visible(False)
 hit_sound = pygame.mixer.Sound('beep-02.wav')
+
+level = GameLevel()
+blocks = []
+i = 30
+while i < screenWidth-30:
+    blocks.append(Rect(i, 80, 20, 20))
+    i += 50
+level.set_blocks(blocks)
+level.set_level = 1
+levels.append(level)
 
 screens.append(StartScreen())
 
@@ -283,7 +313,7 @@ while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
-            sys.exit()
+            sys.exit(0)
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 pygame.quit()
