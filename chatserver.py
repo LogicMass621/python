@@ -10,21 +10,35 @@ print("The server will start on host:", hostName)
 port=8080
 x.bind((hostName, port))
 print('The server is done binding to host and port.')
-x.listen(1)
-connection,address = x.accept()
-print(address, 'has connected to the server.')
+connections=[]
+x.listen()
+recv_threads = []
 
-def receive():
-   while 1:
-      recv_msg=connection.recv(1024)
-      recv_msg=recv_msg.decode()
-      print("Client:", recv_msg)
-   
-recv_thread = threading.Thread(target=receive)
-recv_thread.start()
+def receive(receiver):
+   connected = True
+   while (connected):
+
+      recv_msg=receiver.recv(1024)
+      print('receive',receiver.getpeername())
+
+      if recv_msg==b'':
+         connected = False
+         print('removed sender',receiver.getpeername())
+         connections.remove(receiver)
+         receiver.close()
+
+      if recv_msg != b'':
+         for i in connections:
+            if receiver != i:
+                  sent=i.send(recv_msg)
+                  print ('sent',sent,'bytes to',i.getpeername())
 
 while 1:
-   send_msg= input(str("Type here: "))
-   send_msg=send_msg.encode()
-   connection.send(send_msg)
+   connection,address = x.accept()
+   connections.append(connection)
+   print(address, 'has connected to the server.')
+
+   recv_threads.append(threading.Thread(target=receive, args=[connection]))
+   recv_threads[-1].start()
+
 
