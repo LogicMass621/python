@@ -106,6 +106,8 @@ port=8080
 running=True
 ballUpdate = False
 reset=False
+reset_time=0
+
 try:
     x.bind((hostName,port))
     x.listen(1)
@@ -123,11 +125,10 @@ except OSError:
     firstPlayer = False
 
 clock=pygame.time.Clock()
+
 def ballReset():
     global p1Score,textP1Score,p2Score,textP2Score,ballRect,speed,p1Rect,p2Rect, ballXStep,ballYStep
-    global reset
-    return
-    reset=True
+
     textP1Score=font.render('Player 1:'
                             +str(p1Score),True,black)
     textP2Score=font.render("Player 2:"
@@ -146,44 +147,51 @@ def ballReset():
         textP2Score=font.render("Player 2:"
                                +str(p2Score),True,black)
     time.sleep(delayTime)
-
 def receive():
     global otherUserY
     global userY
     global ballRect, ballYStep,ballXStep, p1Score,p2Score
     global running
     while running:
-        recv_msg = b''
+        msg_buffer = b''
         new_msg=True
         while True:
-            msg = conn.recv(16)
-            print('recv',msg)
+
+            if (new_msg and len(msg_buffer) < headerSize) or (not new_msg and len(msg_buffer) < headerSize+msglen):
+                msg = conn.recv(16)
+                msg_buffer += msg
+                print('recv',msg, 'buffer', msg_buffer)
+
             if new_msg:
-                print(f"new msg len:",msg[:headerSize].decode())
-                msglen=int(msg[:headerSize])
+                print(f"new msg len:",msg_buffer[:headerSize].decode())
+                msglen=int(msg_buffer[:headerSize])
                 new_msg=False
-            recv_msg += msg
-            if len(recv_msg)-headerSize==msglen:
-                print('full_msg_received',recv_msg[headerSize:].decode())
-                full_msg=recv_msg[headerSize:].decode()
-                if full_msg.count('ball') and firstPlayer == False:
-                    x=recv_msg.split('-')
-                    x[1] = ballRect.x
-                    x[2] = ballRect.y
-                    print('ball coords received',x[1],x[1],'fullmsg:',full_msg)
-                    print('ballUpdate')
-                    running=False
-                    sys.exit()
-                if full_msg=='down':
+
+            if len(msg_buffer)-headerSize>=msglen: # full message
+                decoded_msg=msg_buffer[headerSize:headerSize+msglen].decode()
+                print('decoded_msg_received',decoded_msg)
+                if decoded_msg.count('ball'):
+                    x=decoded_msg.split(':')
+                    x_coord=x[1]
+                    y_coord=x[2]
+                    ballRect.x=float(x_coord)
+                    ballRect.y=float(y_coord)                   
+                    print('ball coords',x_coord,y_coord)
+                if decoded_msg=='down':
                     otherUser.y +=10
-                if full_msg=='up':
+                if decoded_msg=='up':
                     otherUser.y-=10
-                if full_msg=='reset':
-                    ballReset()
-                    print('reset received',full_msg)
-                    running=False
+                if decoded_msg.count('reset'):
+                    x=decoded_msg.split(':')
+                    x[1]=reset_time
+                    if round(time.time(),0)<reset_time:
+                        time.sleep(reset_time-time.time())
+                        ballReset() 
+                    else:
+                        ballReset()
                 new_msg=True
-                recv_msg=b''
+                msg_buffer=msg_buffer[headerSize+msglen:]
+                print('new buffer',msg_buffer)
 
 def eventLoop():
     global running, thisUser, otherUser, counter, ballUpdate, reset
@@ -193,44 +201,48 @@ def eventLoop():
         event=pygame.event.poll()
 
         if event.type == pygame.QUIT:
+        	# TODO send quit to client
             running = False
-            sys.exit()
-            pygame.quit()
 
         if event.type == pygame.KEYDOWN:
+
             if event.key==pygame.K_ESCAPE:
+            	# TODO send quit to client
                 running = False
-                sys.exit()
-                pygame.quit()
+
             if event.key == pygame.K_UP:
                 if thisUser.y != 0:
                     thisUser.y-=10
                     msg=b'up'
                     msg = bytes(f'{len(msg):<{headerSize}}','utf-8')+msg
                     conn.send(msg)
+
             if event.key == pygame.K_DOWN:
                 if thisUser.y != screenHeight-paddleHeight:
                     thisUser.y+=10
                     msg=b'down'
                     msg = bytes(f'{len(msg):<{headerSize}}','utf-8')+msg
                     conn.send(msg)
+
         if reset == True:
-            msg =b'reset'
+            msg =f'reset:{reset_time}'.encode()
             msg = bytes(f'{len(msg):<{headerSize}}','utf-8')+msg
             conn.send(msg)
             reset=False
         
         if ballUpdate==True:
-            msg = f'ball-{ballRect.x}-{ballRect.y}'.encode()
+            msg = f'ball:{ballRect.x}:{ballRect.y}'.encode()
             msg = bytes(f'{len(msg):<{headerSize}}','utf-8')+ msg
+            conn.send(msg)
             ballUpdate=False
+
         time.sleep(0.001)
             
 def ball():
     global ballXStep, ballYStep, ballRect, counter,running
     global p1Score,p2Score,thisUser,otherUser
     global textP1Score,textP2Score,texGameOver
-    global movePaddle, paddleDelay, ballUpdate, reset
+    global movePaddle, paddleDelay, ballUpdate, reset, reset_time
 
     time.sleep(delayTime)
 
@@ -261,24 +273,26 @@ def ball():
                       'X*X+Y*Y=',ballXStep*ballXStep+ballYStep*ballYStep,'speed^2',speed*speed,
                        'collideOtherUser')
                 
-        if ballRect.x+ballSize>screenWidth:
-            ballReset()
-            print('reset')
-            ballXStep=-ballXStep
-        if ballRect.x<0:
-            print('reset')
-            ballReset()
-            ballXStep=-ballXStep
+        if ballRect.x+ballSize>screenWidth or ballRect.x<0:
+            print('reset ball')
+            reset_time = round(time.time(),0)+2
+            reset=True
+            ballRect.x=200-ballSize/2
+            ballRect.y=200-ballSize/2
+            ballXStep=0
+            ballYStep=0
         if ballRect.y<0:
             ballRect.y=0
             ballYStep=-ballYStep
         if ballRect.y+ballSize>screenHeight:
             ballRect.y=screenHeight-ballSize
             ballYStep=-ballYStep
-            
-        ballRect.x+=ballXStep
-        ballRect.y+=ballYStep
-        ballUpdate=True
+        if round(time.time(),0)==reset_time: 
+            ballReset()
+        else:
+            ballRect.x+=ballXStep
+            ballRect.y+=ballYStep
+            ballUpdate=True
 
         time.sleep(0.005)
 
@@ -301,14 +315,18 @@ def render():
 
 event_thread = threading.Thread(target=eventLoop)
 event_thread.start()
+
+recv_thread = threading.Thread(target=receive)
+recv_thread.start()
+
 if firstPlayer==True:
     ball_thread = threading.Thread(target=ball)
     ball_thread.start()
-recv_thread = threading.Thread(target=receive)
-recv_thread.start()
+
 while running: 
     render()
     clock.tick(60)
     #print(clock.get_fps())
 
-
+sys.exit()
+pygame.quit()
