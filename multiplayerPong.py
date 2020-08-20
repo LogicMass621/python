@@ -106,7 +106,7 @@ port=8080
 running=True
 ballUpdate = False
 ball_reset=False
-
+server_IP = '192.168.1.160'
 
 try:
     x.bind((hostName,port))
@@ -117,7 +117,8 @@ try:
     pygame.display.set_caption('Player One')
     firstPlayer = True
 except OSError:
-    x.connect(('massimo-pc',port))
+    server_IP=input('Server IP:')
+    x.connect((server_IP,port))
     conn=x
     thisUser=p2Rect
     otherUser=p1Rect
