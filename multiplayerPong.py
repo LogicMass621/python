@@ -137,23 +137,23 @@ def receive():
             if (new_msg and len(msg_buffer) < headerSize) or (not new_msg and len(msg_buffer) < headerSize+msglen):
                 msg = conn.recv(16)
                 msg_buffer += msg
-                print('recv',msg, 'buffer', msg_buffer)
+                #print('recv',msg, 'buffer', msg_buffer)
 
             if new_msg:
-                print(f"new msg len:",msg_buffer[:headerSize].decode())
+                #print(f"new msg len:",msg_buffer[:headerSize].decode())
                 msglen=int(msg_buffer[:headerSize])
                 new_msg=False
 
             if len(msg_buffer)-headerSize>=msglen: # full message
                 decoded_msg=msg_buffer[headerSize:headerSize+msglen].decode()
-                print('decoded_msg_received',decoded_msg)
+                #print('decoded_msg_received',decoded_msg)
                 if decoded_msg.count('ball'):
                     x=decoded_msg.split(':')
                     x_coord=x[1]
                     y_coord=x[2]
                     ballRect.x=float(x_coord)
                     ballRect.y=float(y_coord)                   
-                    print('ball coords',x_coord,y_coord)
+                    #print('ball coords',x_coord,y_coord)
                 if decoded_msg.count('paddle'):
                     x=decoded_msg.split(':')
                     otherUser.y=x[1]
@@ -161,10 +161,14 @@ def receive():
                     scores=decoded_msg.split(':')
                     p1Score=scores[1]
                     p2Score=scores[2]
+                    textP1Score=font.render('Player 1:'
+                        +str(p1Score),True,black)
+                    textP2Score=font.render("Player 2:"
+                        +str(p2Score),True,black)
 
                 new_msg=True
                 msg_buffer=msg_buffer[headerSize+msglen:]
-                print('new buffer',msg_buffer)
+                #print('new buffer',msg_buffer)
 
 
 def eventLoop():
@@ -214,15 +218,16 @@ def eventLoop():
 def ballReset():
 
     global p1Score,textP1Score,p2Score,textP2Score
-    global ballRect,speed,p1Rect,p2Rect, ballXStep,ballYStep, ball_reset
-    print('ballReset')
+    global ballRect,speed,p1Rect,p2Rect
+    global ballXStep,ballYStep, ballUpdate, ball_reset
+    #print('ballReset')
     ball_reset=True
-    time.sleep(delayTime)
     ballRect.x=200-ballSize/2
     ballRect.y=200-ballSize/2
     ballXStep=0
     ballYStep=0
-
+    ballUpdate=True
+    time.sleep(delayTime)
     textP1Score=font.render('Player 1:'
         +str(p1Score),True,black)
     textP2Score=font.render("Player 2:"
@@ -244,11 +249,11 @@ def ball():
             ballYStep += (ballMidPoint - paddleMidPoint)/stepStrength
             ballYStep = max(-speed+.25,min(speed-.25, ballYStep))
             ballXStep = math.sqrt(abs(speed*speed - ballYStep*ballYStep))
-            if ballXStep*ballXStep+ballYStep*ballYStep>speed*speed:
-                print('thisUser.x: ',thisUser.x,' ballXStep: ',ballXStep,
-                      'ballYStep: ',ballYStep,' ballRect.x: ',ballRect.x,' ballRect.y: ',ballRect.y,
-                      'X*X+Y*Y=',ballXStep*ballXStep+ballYStep*ballYStep,'speed^2',speed*speed,
-                      'collideThisUser')
+            #if ballXStep*ballXStep+ballYStep*ballYStep>speed*speed:
+                #print('thisUser.x: ',thisUser.x,' ballXStep: ',ballXStep,
+                      #'ballYStep: ',ballYStep,' ballRect.x: ',ballRect.x,' ballRect.y: ',ballRect.y,
+                      #'X*X+Y*Y=',ballXStep*ballXStep+ballYStep*ballYStep,'speed^2',speed*speed,
+                      #'collideThisUser')
 
         if otherUser.colliderect(ballRect):
             ballMidPoint = ballRect.y+ballSize/2
@@ -257,12 +262,12 @@ def ball():
             ballYStep = max(-speed+.25,min(speed-.25, ballYStep))
             ballXStep = - \
                 math.sqrt(abs(speed*speed - ballYStep*ballYStep))
-            if ballXStep*ballXStep+ballYStep*ballYStep>speed*speed:
-                print('otherUser.x: ',thisUser.x,
-                      ' ballXStep: ',ballXStep,'ballYStep: ',ballYStep,
-                      ' ballRect.x: ',ballRect.x,' ballRect.y: ',ballRect.y,
-                      'X*X+Y*Y=',ballXStep*ballXStep+ballYStep*ballYStep,'speed^2',speed*speed,
-                       'collideOtherUser')
+            #if ballXStep*ballXStep+ballYStep*ballYStep>speed*speed:
+                #print('otherUser.x: ',thisUser.x,
+                      #' ballXStep: ',ballXStep,'ballYStep: ',ballYStep,
+                      #' ballRect.x: ',ballRect.x,' ballRect.y: ',ballRect.y,
+                      #'X*X+Y*Y=',ballXStep*ballXStep+ballYStep*ballYStep,'speed^2',speed*speed,
+                       #'collideOtherUser')
                 
         if ballRect.x+ballSize>screenWidth:
             p1Score+=1
@@ -297,6 +302,7 @@ def render():
     if p1Score==maxScore or p2Score==maxScore:
         screen.blit(textGameOver,(screenWidth/2-textGameOver.get_width()/2,
                                 screenHeight/2-textGameOver.get_height()*2))
+        running=False
 
     pygame.display.update()
 
