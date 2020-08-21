@@ -103,7 +103,10 @@ x=socket.socket()
 x.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 hostName = socket.gethostname()
 port=50000
+<<<<<<< HEAD
 running=True
+=======
+>>>>>>> 7fd601d1e6d6136fa2ecb803f1dc0f5fdf312dd7
 ballUpdate = False
 ball_reset=False
 server_IP = '192.168.1.160'
@@ -130,7 +133,6 @@ clock=pygame.time.Clock()
 
 def receive():
     global ballRect, ballYStep,ballXStep, p1Score,p2Score,textP1Score,textP2Score,thisUser,otherUser
-    global running
     while running:
         msg_buffer = b''
         new_msg=True
@@ -237,7 +239,7 @@ def ballReset():
     ballXStep=speed
 
 def ball():
-    global ballXStep, ballYStep, ballRect, counter,running
+    global ballXStep, ballYStep, ballRect, counter
     global p1Score,p2Score,thisUser,otherUser
     global textP1Score,textP2Score,texGameOver
     global movePaddle, paddleDelay, ballUpdate
@@ -292,6 +294,7 @@ def ball():
 
                     
 def render():
+    global running
 
     screen.fill(white)
     
