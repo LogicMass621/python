@@ -189,15 +189,15 @@ def eventLoop():
                 running = False
 
             if event.key == pygame.K_UP:
-                if thisUser.y != 0:
-                    thisUser.y-=5
+                if thisUser.y > 0:
+                    thisUser.y-=7.5
                     msg=f'paddle:{thisUser.y}'.encode()
                     msg = bytes(f'{len(msg):<{headerSize}}','utf-8')+msg
                     conn.send(msg)
 
             if event.key == pygame.K_DOWN:
-                if thisUser.y != screenHeight-paddleHeight:
-                    thisUser.y+=5
+                if thisUser.y+paddleHeight < screenHeight:
+                    thisUser.y+=7.5
                     msg=f'paddle:{thisUser.y}'.encode()
                     msg = bytes(f'{len(msg):<{headerSize}}','utf-8')+msg
                     conn.send(msg)
