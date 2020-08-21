@@ -300,11 +300,6 @@ def render():
     screen.blit(textP1Score,(0,0))
     screen.blit(textP2Score,(screenWidth-textP2Score.get_width(),0))
 
-    if p1Score==maxScore or p2Score==maxScore:
-        screen.blit(textGameOver,(screenWidth/2-textGameOver.get_width()/2,
-                                screenHeight/2-textGameOver.get_height()*2))
-        running=False
-
     pygame.display.update()
 
 
