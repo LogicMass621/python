@@ -106,8 +106,8 @@ port=50000
 ballUpdate = False
 ball_reset=False
 server_IP = '192.168.1.160'
-
-try:
+OneOrTwo=input('Do you want to start the server?')
+if OneOrTwo.count('y'or'Y'):
     x.bind((hostName,port))
     print("Bound to address ",x.getsockname())
     x.listen(1)
@@ -116,7 +116,7 @@ try:
     otherUser=p2Rect
     pygame.display.set_caption('Player One')
     firstPlayer = True
-except OSError:
+else:
     server_IP=input("Server IP:")
     x.connect((server_IP,port))
     conn=x
@@ -190,14 +190,14 @@ def eventLoop():
 
             if event.key == pygame.K_UP:
                 if thisUser.y != 0:
-                    thisUser.y-=10
+                    thisUser.y-=5
                     msg=f'paddle:{thisUser.y}'.encode()
                     msg = bytes(f'{len(msg):<{headerSize}}','utf-8')+msg
                     conn.send(msg)
 
             if event.key == pygame.K_DOWN:
                 if thisUser.y != screenHeight-paddleHeight:
-                    thisUser.y+=10
+                    thisUser.y+=5
                     msg=f'paddle:{thisUser.y}'.encode()
                     msg = bytes(f'{len(msg):<{headerSize}}','utf-8')+msg
                     conn.send(msg)
