@@ -102,13 +102,14 @@ delayTime=3
 x=socket.socket()
 x.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 hostName = socket.gethostname()
-port=8080
+port=50000
 ballUpdate = False
 ball_reset=False
 server_IP = '192.168.1.160'
 
 try:
     x.bind((hostName,port))
+    print("Bound to address ",x.getsockname())
     x.listen(1)
     conn,addr=x.accept()
     thisUser=p1Rect
@@ -116,7 +117,7 @@ try:
     pygame.display.set_caption('Player One')
     firstPlayer = True
 except OSError:
-    server_IP=input('Server IP:')
+    server_IP=input("Server IP:")
     x.connect((server_IP,port))
     conn=x
     thisUser=p2Rect
