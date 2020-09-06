@@ -65,10 +65,46 @@ class Rect:
     def toPygame(self):
         return self.__pyg_rect
 
-class Int:
+class Projectile:
 
-    def __init__(self, n: int):
-        self.n = n
+    def __init__(self, xStep: float, yStep: float, rect, player):
+        self.__xStep = xStep
+        self.__yStep = yStep
+        self.__rect = rect
+        self.__player = player
+
+    def __str__(self):
+        return 'xStep: {} yStep: {} rect: {} player: {}'.format(self.__xStep, self.__yStep,
+                                                         self.__rect, self.__player)
+
+    @property
+    def xStep(self):
+        return self.__xStep
+    @property
+    def yStep(self):
+        return self.__yStep
+    @property
+    def rect(self):
+        return self.__rect
+    @property
+    def player(self):
+        return self.__player
+    @xStep.setter
+    def xStep(self, xStep):
+        self.__xStep = float(xStep)
+    @yStep.setter
+    def yStep(self, yStep):
+        self.__yStep = float(yStep)
+    @rect.setter
+    def rect(self, rect):
+        self.__rect = rect
+    @player.setter
+    def player(self,rect):
+        self.__player = player
+    def collideRect(self,other):
+        if self.player != other:
+           return self.rect.colliderect(other)
+
 
 def rot_center(image, angle):
     """rotate an image while keeping its center and size"""
@@ -78,6 +114,23 @@ def rot_center(image, angle):
     rot_rect.center = rot_image.get_rect().center
     rot_image = rot_image.subsurface(rot_rect).copy()
     return rot_image
+class Tank:
+    def __init__(self, rect, angle):
+        self.__rect = rect
+        self.__angle = angle
+    @property
+    def rect(self):
+        return self.__rect
+    @property
+    def angle(self):
+        return self.__angle
+    @rect.setter
+    def rect(self,rect):
+        self.__rect = rect
+    @angle.setter
+    def angle(self,angle):
+        self.__angle = angle
+
 
 x=socket.socket()
 x.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -94,17 +147,23 @@ screen = pygame.display.set_mode((screenWidth, screenHeight))
 
 tankSize= 30
 tank = pygame.image.load('tank.png')
-p1Rect=Rect(screenWidth-4*tankSize,(screenHeight-tankSize)/2,tankSize,tankSize)
-p2Rect=Rect(3*tankSize,(screenHeight-tankSize)/2,tankSize,tankSize)
-p1Angle = Int(0)
-p2Angle = Int(0)
+
+p1Tank=Tank(Rect(screenWidth-4*tankSize,(screenHeight-tankSize)/2,tankSize,tankSize),0)
+p2Tank=Tank(Rect(3*tankSize,(screenHeight-tankSize)/2,tankSize,tankSize),0)
 
 running=True
 singlePlayer = True
 
 tanks = {}
 tanks[0] = tank
+tankList = [p1Tank,p2Tank]
 step = 15
+fire = False
+projectileSize=10
+projectiles=[]
+projectileSpeed=2
+p1Lives=5
+p2Lives=5
 for i in range(step, 359, step):
     print("adding tank", i)
     tanks[i] = rot_center(tank,-i)
@@ -118,8 +177,8 @@ if singlePlayer != True:
         print("Bound to address ",x.getsockname())
         x.listen(1)
         conn,addr=x.accept()
-        thisUser=p1Rect
-        otherUser=p2Rect
+        thisUser=p1Tank
+        otherUser=p2Tank
         pygame.display.set_caption('Player One')
         firstPlayer = True
     else:
@@ -130,15 +189,13 @@ if singlePlayer != True:
         else: 
             x.connect((server_IP,port))
         conn=x
-        thisUser=p2Rect
-        otherUser=p1Rect
+        thisUser=p2Tank
+        otherUser=p1Tank
         pygame.display.set_caption('Player Two')
         firstPlayer = False
 else:
-    thisUser = p1Rect
-    otherUser = p2Rect
-    thisAngle = p1Angle
-    otherAngle = p2Angle
+    thisUser = p1Tank
+    otherUser = p2Tank
 
 
 clock=pygame.time.Clock()
@@ -164,17 +221,12 @@ def receive():
                 decoded_msg=msg_buffer[headerSize:headerSize+msglen].decode()
                 #print('decoded_msg_received',decoded_msg)
 
-
-
-
-
-
                 new_msg=True
                 msg_buffer=msg_buffer[headerSize+msglen:]
                 #print('new buffer',msg_buffer)
 
 def eventLoop():
-    global running, thisUser, otherUser, thisAngle, otherAngle
+    global running, thisUser, otherUser, fire, projectiles
     pygame.key.set_repeat(75 , 50)
     pygame.display.init()
     while running:
@@ -191,41 +243,69 @@ def eventLoop():
                 running = False
 
             if event.key == pygame.K_w:
-                radians = math.radians(thisAngle.n)
-                thisUser.x += 10*math.sin(radians)
-                thisUser.y -= 10*math.cos(radians)
+                radians = math.radians(thisUser.angle)
+                thisUser.rect.x += 10*math.sin(radians)
+                thisUser.rect.y -= 10*math.cos(radians)
                 if singlePlayer != True:
                     msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
                     conn.send(msg)
 
             if event.key == pygame.K_s:
-                radians = math.radians(thisAngle.n)
-                thisUser.x -= 10*math.sin(radians)
-                thisUser.y += 10*math.cos(radians)
+                radians = math.radians(thisUser.angle)
+                thisUser.rect.x -= 10*math.sin(radians)
+                thisUser.rect.y += 10*math.cos(radians)
                 if singlePlayer != True:
                     msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
                     conn.send(msg)
 
             if event.key == pygame.K_d:
-                thisAngle.n = (thisAngle.n + 15) % 360
-                print("thisAngle",thisAngle.n)
+                thisUser.angle = (thisUser.angle + 15) % 360
+                print("thisAngle",thisUser.angle)
                 if singlePlayer != True:
                     msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
                     conn.send(msg)
 
             if event.key == pygame.K_a:
-                thisAngle.n = (thisAngle.n - 15) % 360
-                print("thisAngle",thisAngle.n)
+                thisUser.angle = (thisUser.angle - 15) % 360
+                print("thisAngle",thisUser.angle)
                 if singlePlayer != True:
                     msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
                     conn.send(msg)
+            if event.key == pygame.K_SPACE:
+                radians=math.radians(thisUser.angle)
+                x=thisUser.rect.x+thisUser.rect.width-projectileSize/2
+                y=thisUser.rect.y+thisUser.rect.height-projectileSize/2
+                print(math.cos(radians),math.sin(radians))
+                projectiles.append(Projectile(projectileSpeed*math.sin(radians),-projectileSpeed*math.cos(radians),
+                    Rect(x,y,projectileSize,projectileSize),thisUser))                
+                if singlePlayer != True:                
+                    msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
+                    conn.send(msg)
+        time.sleep(0.001)
+
+def projectile():
+    global fire
+    global projectiles
+    global radians
+    while running:
+        #print('projectile thread',*projectiles)
+        for item in projectiles[:]:
+            if item.rect.x >= screenWidth or item.rect.x+projectileSize <= 0 or item.rect.y+projectileSize <= 0 or item.rect.y >= screenHeight:
+                projectiles.remove(item)
+            #for tank in tankList:
+                #if item.collideRect(tank.rect):
+                    #projectiles.remove(item)
+            item.rect.x+=item.xStep
+            item.rect.y+=item.yStep
         time.sleep(0.001)
 
 
 def render():
     screen.fill(white)
-    screen.blit(tanks[p1Angle.n],p1Rect.toPygame())
-    screen.blit(tanks[p2Angle.n],p2Rect.toPygame())
+    screen.blit(tanks[p1Tank.angle],p1Tank.rect.toPygame())
+    screen.blit(tanks[p2Tank.angle],p2Tank.rect.toPygame())
+    for i in projectiles:
+        pygame.draw.rect(screen,black,i.rect.toPygame())
     pygame.display.update()
 
 event_thread = threading.Thread(target=eventLoop)
@@ -233,6 +313,8 @@ event_thread.start()
 if singlePlayer != True:
     recv_thread = threading.Thread(target=receive)
     recv_thread.start()
+proj_thread = threading.Thread(target=projectile)
+proj_thread.start()
 
 while running:
     render()
