@@ -110,8 +110,8 @@ running=True
 ballUpdate = False
 ball_reset=False
 server_IP = '192.168.1.160'
-
-try:
+OneOrTwo=input('Do you want to start the server?')
+if OneOrTwo.count('y'or'Y'):
     x.bind((hostName,port))
     print("Bound to address ",x.getsockname())
     x.listen(1)
@@ -120,7 +120,7 @@ try:
     otherUser=p2Rect
     pygame.display.set_caption('Player One')
     firstPlayer = True
-except OSError:
+else:
     server_IP=input("Server IP:")
     x.connect((server_IP,port))
     conn=x
@@ -193,15 +193,15 @@ def eventLoop():
                 running = False
 
             if event.key == pygame.K_UP:
-                if thisUser.y != 0:
-                    thisUser.y-=10
+                if thisUser.y > 0:
+                    thisUser.y-=7.5
                     msg=f'paddle:{thisUser.y}'.encode()
                     msg = bytes(f'{len(msg):<{headerSize}}','utf-8')+msg
                     conn.send(msg)
 
             if event.key == pygame.K_DOWN:
-                if thisUser.y != screenHeight-paddleHeight:
-                    thisUser.y+=10
+                if thisUser.y+paddleHeight < screenHeight:
+                    thisUser.y+=7.5
                     msg=f'paddle:{thisUser.y}'.encode()
                     msg = bytes(f'{len(msg):<{headerSize}}','utf-8')+msg
                     conn.send(msg)
@@ -303,11 +303,6 @@ def render():
     pygame.draw.rect(screen,black,ballRect.toPygame())
     screen.blit(textP1Score,(0,0))
     screen.blit(textP2Score,(screenWidth-textP2Score.get_width(),0))
-
-    if p1Score==maxScore or p2Score==maxScore:
-        screen.blit(textGameOver,(screenWidth/2-textGameOver.get_width()/2,
-                                screenHeight/2-textGameOver.get_height()*2))
-        running=False
 
     pygame.display.update()
 
