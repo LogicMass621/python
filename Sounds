@@ -2,6 +2,7 @@
 import pygame, sys
 from pygame.locals import *
 
+pygame.mixer.init()
 soundObj = pygame.mixer.Sound('beeps.wav')
 soundObj.play()
 import time
