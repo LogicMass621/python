@@ -102,6 +102,10 @@ x=socket.socket()
 x.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 hostName = socket.gethostname()
 port=50000
+<<<<<<< HEAD
+running=True
+=======
+>>>>>>> 7fd601d1e6d6136fa2ecb803f1dc0f5fdf312dd7
 ballUpdate = False
 ball_reset=False
 server_IP = '192.168.1.160'
