@@ -90,7 +90,6 @@ pygame.font.init()
 font = pygame.font.Font('freesansbold.ttf', 15)
 p1Score=0
 p2Score=0
-maxScore=5
 textP1Score=font.render('Player 1:'+str(p1Score),True,black)
 textP2Score=font.render("Player 2:"+str(p2Score),True,black)
 textGameOver=font.render('Game Over!',True,black)
@@ -106,8 +105,8 @@ port=50000
 ballUpdate = False
 ball_reset=False
 server_IP = '192.168.1.160'
-OneOrTwo=input('Do you want to start the server?')
-if OneOrTwo.count('y'or'Y'):
+server=input('Do you want to start the server?')
+if server.count('y'or'Y'):
     x.bind((hostName,port))
     print("Bound to address ",x.getsockname())
     x.listen(1)
