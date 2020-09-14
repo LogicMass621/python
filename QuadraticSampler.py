@@ -1,23 +1,20 @@
 #!/usr/bin/python3
 import math
 import sys
+
 a = float(input('What is A:'))
 b = float(input('What is B:'))
 c = float(input ('What is C:'))
 
-sqroot = math.sqrt(b**2-4*a*c)
+domain1 = float(input('What is the lower number in the domain:'))
+domain2 = float(input('What is the higher number in the domain:'))
+interval = float(input('What is the interval you want to sample:'))
 
-if sqroot<0:
-    print('The answer is imaginary')
-    sys.exit()
+x = domain1
 
-answer1 = (-b + sqroot) / (2*a)
-answer2 = (-b - sqroot) / (2*a)
-
-answer1 = round(answer1,4)
-answer2= round(answer2,4)
-
-answer1 = str(answer1)
-answer2= str(answer2)
-
-print('The answer is around '+answer1+' and '+answer2)
+while x <= domain2:
+    y = a * (x**2) + b * x + c
+    print(repr(round(x,4)).rjust(6),        #column x
+          '|',                                                         # divider
+          repr(round(y,4)).rjust(6))             # column y
+    x = x +interval
