@@ -52,6 +52,16 @@ class Rect:
                 self.y+self.height >= other.y and \
                 other.y+other.height >= self.y:
             return True
+    def colliderect(self, other, adjustment):
+        x=other.x+adjustment
+        y=other.y+adjustment
+        width=other.width-adjustment*2
+        height=other.height-adjustment*2
+        if self.x + self.width >= x and \
+                x+width >= self.x and \
+                self.y + self.height >= y and \
+                y+height >= self.y:
+            return True
 
     def rectintersection(self, other):
         x5 = max(self.x, other.x)
@@ -102,10 +112,11 @@ class Projectile:
     def player(self,rect):
         self.__player = player
 
-    def collideRect(self,other):
+    def collideRect(self,other,adjustment):
         if self.player != other:
-           return self.rect.colliderect(other)
-
+           return self.rect.colliderect(other.rect,adjustment)
+        else:
+            return False
 
 def rot_center(image, angle):
     """rotate an image while keeping its center and size"""
@@ -121,24 +132,34 @@ class Tank:
         self.__rect = rect
         self.__angle = angle
         self.__lastFired = 0
+        self.__lives = 5
+
     @property
     def rect(self):
         return self.__rect
     @property
     def angle(self):
         return self.__angle
+    @property
+    def lastFired(self):
+        return self.__lastFired
+    @property
+    def lives(self):
+        return self.__lives
+    
+
     @rect.setter
     def rect(self,rect):
         self.__rect = rect
     @angle.setter
     def angle(self,angle):
         self.__angle = angle
-    @property
-    def lastFired(self):
-        return self.__lastFired
     @lastFired.setter
     def lastFired(self, time):
         self.__lastFired = time
+    def reduceLife(self):
+        self.__lives -= 1
+
 
 x = socket.socket()
 x.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -151,6 +172,7 @@ print("Hostname:",hostName, "IP:", server_IP)
 
 black = (0,0,0)
 white = (255,255,255)
+red = (255,0,0)
 
 screenWidth = 800
 screenHeight = 800
@@ -163,6 +185,7 @@ p1Tank = Tank(Rect(screenWidth-tankSize*2,(screenHeight-tankSize)/2,tankSize,tan
 p2Tank = Tank(Rect(tankSize,(screenHeight-tankSize)/2,tankSize,tankSize),0)
 
 running=True
+playing=True
 singlePlayer = True
 
 tanks = {}
@@ -175,8 +198,11 @@ projectiles=[]
 projectileSpeed=4
 reloadSpeed=1
 
-p1Lives=5
-p2Lives=5
+pygame.font.init()
+font = pygame.font.Font('freesansbold.ttf', 20)
+textP1Lives = font.render(f'Player 1 Lives: {p1Tank.lives}', True, black, white)
+textP2Lives = font.render(f'Player 2 Lives: {p2Tank.lives}', True, black, white)
+textGameOver = font.render('Game Over', True, black, white)
 
 for i in range(15, 359, 15):
     #print("adding tank", i)
@@ -252,65 +278,72 @@ def eventLoop():
                 # TODO send quit to client
                 running = False
 
-            if event.key == pygame.K_w:
-                radians = math.radians(thisUser.angle)
-                thisUser.rect.x = min(max(0,thisUser.rect.x + tankSpeed*math.sin(radians)),screenWidth-thisUser.rect.width)
-                thisUser.rect.y = min(max(0,thisUser.rect.y - tankSpeed*math.cos(radians)),screenHeight-thisUser.rect.height)
+            if playing: 
+                if event.key == pygame.K_w:
+                    radians = math.radians(thisUser.angle)
+                    thisUser.rect.x = min(max(0,thisUser.rect.x + tankSpeed*math.sin(radians)),screenWidth-thisUser.rect.width)
+                    thisUser.rect.y = min(max(0,thisUser.rect.y - tankSpeed*math.cos(radians)),screenHeight-thisUser.rect.height)
 
-                if singlePlayer != True:
-                    msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
-                    conn.send(msg)
-
-            if event.key == pygame.K_s:
-                radians = math.radians(thisUser.angle)
-                thisUser.rect.x = min(max(0,thisUser.rect.x - tankSpeed*math.sin(radians)),screenWidth-thisUser.rect.width)
-                thisUser.rect.y = min(max(0,thisUser.rect.y + tankSpeed*math.cos(radians)),screenHeight-thisUser.rect.height)
-                if singlePlayer != True:
-                    msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
-                    conn.send(msg)
-
-            if event.key == pygame.K_d:
-                thisUser.angle = (thisUser.angle + 15) % 360
-                if singlePlayer != True:
-                    msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
-                    conn.send(msg)
-
-            if event.key == pygame.K_a:
-                thisUser.angle = (thisUser.angle - 15) % 360
-                if singlePlayer != True:
-                    msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
-                    conn.send(msg)
-
-            if event.key == pygame.K_SPACE:
-                currTime = time.time()
-                if thisUser.lastFired < currTime - reloadSpeed:
-                    thisUser.lastFired = currTime
-                    radians=math.radians(thisUser.angle)
-                    x=thisUser.rect.x+thisUser.rect.width/2-projectileSize/2
-                    y=thisUser.rect.y+thisUser.rect.height/2-projectileSize/2
-                    #print(math.cos(radians),math.sin(radians))
-                    projectiles.append(
-                        Projectile(projectileSpeed*math.sin(radians),
-                        -projectileSpeed*math.cos(radians),
-                        Rect(x,y,projectileSize,projectileSize),thisUser))                
-                    if singlePlayer != True:                
+                    if singlePlayer != True:
                         msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
                         conn.send(msg)
+
+                if event.key == pygame.K_s:
+                    radians = math.radians(thisUser.angle)
+                    thisUser.rect.x = min(max(0,thisUser.rect.x - tankSpeed*math.sin(radians)),screenWidth-thisUser.rect.width)
+                    thisUser.rect.y = min(max(0,thisUser.rect.y + tankSpeed*math.cos(radians)),screenHeight-thisUser.rect.height)
+                    if singlePlayer != True:
+                        msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
+                        conn.send(msg)
+
+                if event.key == pygame.K_d:
+                    thisUser.angle = (thisUser.angle + 15) % 360
+                    if singlePlayer != True:
+                        msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
+                        conn.send(msg)
+
+                if event.key == pygame.K_a:
+                    thisUser.angle = (thisUser.angle - 15) % 360
+                    if singlePlayer != True:
+                        msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
+                        conn.send(msg)
+
+                if event.key == pygame.K_SPACE:
+                    currTime = time.time()
+                    if thisUser.lastFired < currTime - reloadSpeed:
+                        thisUser.lastFired = currTime
+                        radians=math.radians(thisUser.angle)
+                        x=thisUser.rect.x+(thisUser.rect.width-projectileSize)/2
+                        y=thisUser.rect.y+(thisUser.rect.height-projectileSize)/2
+                        #print(math.cos(radians),math.sin(radians))
+                        projectiles.append(
+                            Projectile(projectileSpeed*math.sin(radians),
+                            -projectileSpeed*math.cos(radians),
+                            Rect(x,y,projectileSize,projectileSize),thisUser))                
+                        if singlePlayer != True:                
+                            msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
+                            conn.send(msg)
 
 
 def projectile():
     global projectiles
     global radians
+    global textP1Lives, textP2Lives
+    global playing
     while running:
         #print('projectile thread',len(projectiles))
-        for item in projectiles[:]:
-            if item.rect.x >= screenWidth or item.rect.x+projectileSize <= 0 or item.rect.y+projectileSize <= 0 or item.rect.y >= screenHeight:
-                projectiles.remove(item)
-            #for tank in tankList:
-                #if item.collideRect(tank.rect):
-                    #projectiles.remove(item)
-            item.rect.x+=item.xStep
-            item.rect.y+=item.yStep
+        for projectile in projectiles[:]:
+            if projectile.rect.x >= screenWidth or projectile.rect.x+projectileSize <= 0 or projectile.rect.y+projectileSize <= 0 or projectile.rect.y >= screenHeight:
+                projectiles.remove(projectile)
+            for tank in tankList:
+                if projectile.collideRect(tank,20):
+                    p2Tank.reduceLife()
+                    textP2Lives = font.render(f'Player 2 Lives: {p2Tank.lives}', True, black, white)
+                    projectiles.remove(projectile)
+                    if(p2Tank.lives==0) :
+                        playing = False
+            projectile.rect.x+=projectile.xStep
+            projectile.rect.y+=projectile.yStep
 
         time.sleep(0.01)
 
@@ -319,8 +352,15 @@ def render():
     screen.fill(white)
     screen.blit(tanks[p1Tank.angle],p1Tank.rect.toPygame())
     screen.blit(tanks[p2Tank.angle],p2Tank.rect.toPygame())
-    for i in projectiles:
-        pygame.draw.rect(screen,black,i.rect.toPygame())
+
+    if playing:
+        for i in projectiles:
+            pygame.draw.rect(screen,red,i.rect.toPygame())
+    else:
+        screen.blit(textGameOver,((screenWidth-textGameOver.get_width())/2,screenHeight/2))
+
+    screen.blit(textP1Lives,(0,0))
+    screen.blit(textP2Lives, (screenWidth-textP2Lives.get_width(),0))
     pygame.display.update()
 
 event_thread = threading.Thread(target=eventLoop)
