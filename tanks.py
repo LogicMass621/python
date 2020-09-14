@@ -18,7 +18,7 @@ class Rect:
 
     def __str__(self):
         return 'x: {} y: {} width: {} height: {}'.format(self.__x, self.__y,
-                                                         self.__width, self.__height)
+            self.__width, self.__height)
 
     @property
     def x(self):
@@ -84,8 +84,8 @@ class Projectile:
         self.__player = player
 
     def __str__(self):
-        return 'xStep: {} yStep: {} rect: {} player: {}'.format(self.__xStep, self.__yStep,
-                                                         self.__rect, self.__player)
+        return 'xStep: {} yStep: {} rect: {} player: {}'.format(self.__xStep,
+            self.__yStep, self.__rect, self.__player)
 
     @property
     def xStep(self):
@@ -181,11 +181,12 @@ screen = pygame.display.set_mode((screenWidth, screenHeight))
 tank = pygame.image.load('tank.png')
 tankSize = tank.get_width()
 
-p1Tank = Tank(Rect(screenWidth-tankSize*2,(screenHeight-tankSize)/2,tankSize,tankSize),0)
+p1Tank = Tank(Rect(screenWidth-tankSize*2,(screenHeight-tankSize)/2,
+            tankSize,tankSize),0)
 p2Tank = Tank(Rect(tankSize,(screenHeight-tankSize)/2,tankSize,tankSize),0)
 
-running=True
-playing=True
+running = True
+playing = True
 singlePlayer = True
 
 tanks = {}
@@ -193,10 +194,10 @@ tanks[0] = tank
 tankList = [p1Tank,p2Tank]
 tankSpeed = 10
 
-projectileSize=10
-projectiles=[]
-projectileSpeed=4
-reloadSpeed=1
+projectileSize = 10
+projectiles = []
+projectileSpeed = 4
+reloadSpeed = 1
 
 pygame.font.init()
 font = pygame.font.Font('freesansbold.ttf', 20)
@@ -239,7 +240,8 @@ def receive():
         new_msg=True
         while True:
 
-            if (new_msg and len(msg_buffer) < headerSize) or (not new_msg and len(msg_buffer) < headerSize+msglen):
+            if (new_msg and len(msg_buffer) < headerSize) \
+                or (not new_msg and len(msg_buffer) < headerSize+msglen):
                 msg = conn.recv(16)
                 msg_buffer += msg
                 #print('recv',msg, 'buffer', msg_buffer)
@@ -279,35 +281,44 @@ def eventLoop():
                 running = False
 
             if playing: 
+                # UP
                 if event.key == pygame.K_w:
                     radians = math.radians(thisUser.angle)
-                    thisUser.rect.x = min(max(0,thisUser.rect.x + tankSpeed*math.sin(radians)),screenWidth-thisUser.rect.width)
-                    thisUser.rect.y = min(max(0,thisUser.rect.y - tankSpeed*math.cos(radians)),screenHeight-thisUser.rect.height)
+                    thisUser.rect.x = min(max(0,thisUser.rect.x +
+                        tankSpeed*math.sin(radians)),screenWidth -
+                        thisUser.rect.width)
+                    thisUser.rect.y = min(max(0,thisUser.rect.y -
+                        tankSpeed*math.cos(radians)),screenHeight -
+                        thisUser.rect.height)
 
                     if singlePlayer != True:
                         msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
                         conn.send(msg)
-
-                if event.key == pygame.K_s:
+                # DOWN
+                if event.key == pygame.K_s: # down
                     radians = math.radians(thisUser.angle)
-                    thisUser.rect.x = min(max(0,thisUser.rect.x - tankSpeed*math.sin(radians)),screenWidth-thisUser.rect.width)
-                    thisUser.rect.y = min(max(0,thisUser.rect.y + tankSpeed*math.cos(radians)),screenHeight-thisUser.rect.height)
+                    thisUser.rect.x = min(max(0,thisUser.rect.x -
+                        tankSpeed*math.sin(radians)),screenWidth -
+                        thisUser.rect.width)
+                    thisUser.rect.y = min(max(0,thisUser.rect.y +
+                        tankSpeed*math.cos(radians)),screenHeight -
+                        thisUser.rect.height)
                     if singlePlayer != True:
                         msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
                         conn.send(msg)
-
+                # ROTATE CLOCKWISE
                 if event.key == pygame.K_d:
                     thisUser.angle = (thisUser.angle + 15) % 360
                     if singlePlayer != True:
                         msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
                         conn.send(msg)
-
+                # ROTATE COUNTER-CLOCKWISE
                 if event.key == pygame.K_a:
                     thisUser.angle = (thisUser.angle - 15) % 360
                     if singlePlayer != True:
                         msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
                         conn.send(msg)
-
+                # FIRE
                 if event.key == pygame.K_SPACE:
                     currTime = time.time()
                     if thisUser.lastFired < currTime - reloadSpeed:
@@ -331,19 +342,28 @@ def projectile():
     global textP1Lives, textP2Lives
     global playing
     while running:
-        #print('projectile thread',len(projectiles))
-        for projectile in projectiles[:]:
-            if projectile.rect.x >= screenWidth or projectile.rect.x+projectileSize <= 0 or projectile.rect.y+projectileSize <= 0 or projectile.rect.y >= screenHeight:
-                projectiles.remove(projectile)
-            for tank in tankList:
-                if projectile.collideRect(tank,20):
-                    p2Tank.reduceLife()
-                    textP2Lives = font.render(f'Player 2 Lives: {p2Tank.lives}', True, black, white)
+        if playing:
+            #print('projectile thread',len(projectiles))
+            for projectile in projectiles[:]:
+                if projectile.rect.x >= screenWidth \
+                    or projectile.rect.x+projectileSize <= 0 \
+                    or projectile.rect.y+projectileSize <= 0 \
+                    or projectile.rect.y >= screenHeight:
                     projectiles.remove(projectile)
-                    if(p2Tank.lives==0) :
-                        playing = False
-            projectile.rect.x+=projectile.xStep
-            projectile.rect.y+=projectile.yStep
+                for tank in tankList:
+                    if projectile.collideRect(tank,20):
+                        p2Tank.reduceLife()
+                        textP2Lives = \
+                            font.render(f'Player 2 Lives: {p2Tank.lives}',
+                            True, black, white)
+                        projectiles.remove(projectile)
+                        if(p2Tank.lives==0) :
+                            playing = False
+                projectile.rect.x += projectile.xStep
+                projectile.rect.y += projectile.yStep
+        else:
+            if len(projectiles) > 0:
+                projectiles = []
 
         time.sleep(0.01)
 
@@ -357,7 +377,8 @@ def render():
         for i in projectiles:
             pygame.draw.rect(screen,red,i.rect.toPygame())
     else:
-        screen.blit(textGameOver,((screenWidth-textGameOver.get_width())//2,screenHeight//2))
+        screen.blit(textGameOver,((screenWidth-textGameOver.get_width())//2,
+            screenHeight//2))
 
     screen.blit(textP1Lives,(0,0))
     screen.blit(textP2Lives, (screenWidth-textP2Lives.get_width(),0))
