@@ -21,7 +21,7 @@ class Sprite:
   self.image = pygame.image.load(self.image_path)
   self.rect = pygame.Rect(0, 0, self.image.get_width(), self.image.get_height())
   if DEBUG:
-   print 'rect = {}'.format(self.rect)
+   print ('rect = {}'.format(self.rect))
  
  def movex(self, x):
   self.x += x
@@ -89,7 +89,7 @@ class Mouse(Sprite):
    self.counter = random.randint(30,80)
    self.direction = random.randint(1,8)
    if DEBUG:
-    print 'counter = {} direction = {}'.format(self.counter, self.direction)
+    print ('counter = {} direction = {}'.format(self.counter, self.direction))
 
   self.counter -= 1
 
@@ -166,11 +166,11 @@ def main():
     mouse.reset()
 
   if DEBUG:
-   print 'cat = {},{} mouse = {},{} points = {}'.format(cat.x, cat.y, mouse.x, mouse.y, points)
+   print ('cat = {},{} mouse = {},{} points = {}'.format(cat.x, cat.y, mouse.x, mouse.y, points))
 
   # 3. OUTPUT DATA
   screen.fill(TEAL)
-  pygame.draw.circle(screen, ORANGE, (screen_width/2, screen_height/2), 30, 0)
+  pygame.draw.circle(screen, ORANGE, (int(screen_width/2), int(screen_height/2)), 30, 0)
   mouse.blit(screen)
   cat.blit(screen)
 
