@@ -149,7 +149,7 @@ class EndScreen(Screen):
 
     def render(self):
         surface.fill(black)
-        textGameover = self.font.render('GAMEOVER!', True, red, black)
+        textGameover = self.font.render('YOU WIN!', True, teal, black)
         textGameoverX = screenWidth/2-textGameover.get_width()/2
         textGameoverY = screenHeight/2-textGameover.get_height()/2
         surface.blit(textGameover, (textGameoverX, textGameoverY))
@@ -181,6 +181,8 @@ class GameScreen(Screen):
                               screenHeight/2, self.ballSize, self.ballSize)
         self.points = 0
         self.speed = 6
+        self.min_speed = 6
+        self.max_speed = 12
         self.y_step = self.speed
         self.x_step = 0
 
@@ -229,9 +231,19 @@ class GameScreen(Screen):
             play_hit_sound()
             ballMidPoint = self.ball_rect.x+self.ballSize/2
             paddleMidPoint = self.paddleRect.x+self.paddleRectWidth/2
-            self.x_step += (ballMidPoint - paddleMidPoint)/self.stepStrength
+            
+            midPtDelta = (ballMidPoint - paddleMidPoint)/self.stepStrength
+
+            self.speed += midPtDelta
+            self.speed = max(self.min_speed,min(self.speed,self.max_speed))
+            
+            self.x_step += midPtDelta
+            self.x_step = min(self.max_speed,max(self.x_step,-self.max_speed))
+            
             self.y_step = - \
                 math.sqrt(abs(self.speed*self.speed - self.x_step*self.x_step))
+
+            print('hit','speed',self.speed,'xstep',self.x_step,'ystep',self.y_step)
 
         if self.ball_rect.y + self.ballSize > screenHeight:
             screens.pop()
