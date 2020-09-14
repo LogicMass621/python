@@ -14,7 +14,7 @@ class Rect:
         self.__width = width
         self.__height = height
         self.__pyg_rect = pygame.Rect(
-            self.__x, self.__y, self.__width, self.__height)
+            int(self.__x), int(self.__y), self.__width, self.__height)
 
     def __str__(self):
         return 'x: {} y: {} width: {} height: {}'.format(self.__x, self.__y,
@@ -27,7 +27,7 @@ class Rect:
     @x.setter
     def x(self, x):
         self.__x = float(x)
-        self.__pyg_rect.x = self.__x
+        self.__pyg_rect.x = int(self.__x)
 
     @property
     def y(self):
@@ -36,7 +36,7 @@ class Rect:
     @y.setter
     def y(self, y):
         self.__y = float(y)
-        self.__pyg_rect.y = self.__y
+        self.__pyg_rect.y = int(self.__y)
 
     @property
     def width(self):
@@ -357,7 +357,7 @@ def render():
         for i in projectiles:
             pygame.draw.rect(screen,red,i.rect.toPygame())
     else:
-        screen.blit(textGameOver,((screenWidth-textGameOver.get_width())/2,screenHeight/2))
+        screen.blit(textGameOver,((screenWidth-textGameOver.get_width())//2,screenHeight//2))
 
     screen.blit(textP1Lives,(0,0))
     screen.blit(textP2Lives, (screenWidth-textP2Lives.get_width(),0))
