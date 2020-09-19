@@ -52,6 +52,9 @@ class Rect:
                 self.y+self.height >= other.y and \
                 other.y+other.height >= self.y:
             return True
+        else:
+            return False
+
     def colliderect(self, other, adjustment):
         x=other.x+adjustment
         y=other.y+adjustment
@@ -62,6 +65,8 @@ class Rect:
                 self.y + self.height >= y and \
                 y+height >= self.y:
             return True
+        else:
+            return False
 
     def rectintersection(self, other):
         x5 = max(self.x, other.x)
@@ -75,13 +80,27 @@ class Rect:
     def toPygame(self):
         return self.__pyg_rect
 
+# global unique identifier
+class Guid:
+
+    def __init__(self):
+        self.__id = 0
+
+    def nextId(self):
+        self.__id += 1
+        return self.__id
+
+guid = Guid()
+
 class Projectile:
 
-    def __init__(self, xStep: float, yStep: float, rect, player):
+    def __init__(self, Id, xStep: float, yStep: float, rect, player):
         self.__xStep = xStep
         self.__yStep = yStep
         self.__rect = rect
         self.__player = player
+        self.__Id = Id
+
 
     def __str__(self):
         return 'xStep: {} yStep: {} rect: {} player: {}'.format(self.__xStep,
@@ -108,13 +127,16 @@ class Projectile:
     @property
     def player(self):
         return self.__player
-    @player.setter
-    def player(self,rect):
-        self.__player = player
+    @property
+    def Id(self):
+        return self.__Id
+    @Id.setter
+    def Id(self, Id):
+        self.__Id=int(Id)
 
     def collideRect(self,other,adjustment):
-        if self.player != other:
-           return self.rect.colliderect(other.rect,adjustment)
+        if other.player!=int(self.player):
+            return self.rect.colliderect(other.rect,adjustment)
         else:
             return False
 
@@ -128,11 +150,14 @@ def rot_center(image, angle):
     return rot_image
 
 class Tank:
-    def __init__(self, rect, angle):
+    def __init__(self, player, rect, angle):
         self.__rect = rect
         self.__angle = angle
         self.__lastFired = 0
         self.__lives = 5
+        self.__player=player
+
+
 
     @property
     def rect(self):
@@ -146,7 +171,9 @@ class Tank:
     @property
     def lives(self):
         return self.__lives
-    
+    @property
+    def player(self):
+        return self.__player
 
     @rect.setter
     def rect(self,rect):
@@ -157,6 +184,9 @@ class Tank:
     @lastFired.setter
     def lastFired(self, time):
         self.__lastFired = time
+    @player.setter
+    def player(self,player):
+        self.__player=player
     def reduceLife(self):
         self.__lives -= 1
 
@@ -180,14 +210,14 @@ screen = pygame.display.set_mode((screenWidth, screenHeight))
 
 tank = pygame.image.load('tank.png')
 tankSize = tank.get_width()
-
-p1Tank = Tank(Rect(screenWidth-tankSize*2,(screenHeight-tankSize)/2,
-            tankSize,tankSize),0)
-p2Tank = Tank(Rect(tankSize,(screenHeight-tankSize)/2,tankSize,tankSize),0)
+p1Tank = Tank(1, Rect(screenWidth-tankSize*2,(screenHeight-tankSize)/2,
+            tankSize,tankSize), 0)
+p2Tank = Tank(2, Rect(tankSize,(screenHeight-tankSize)/2,tankSize,tankSize),0)
 
 running = True
 playing = True
-singlePlayer = True
+SINGLEPLAYER = False
+headerSize = 10
 
 tanks = {}
 tanks[0] = tank
@@ -195,7 +225,9 @@ tankList = [p1Tank,p2Tank]
 tankSpeed = 10
 
 projectileSize = 10
-projectiles = []
+projectiles = {}
+projectilesLock = threading.Lock()
+
 projectileSpeed = 4
 reloadSpeed = 1
 
@@ -209,35 +241,33 @@ for i in range(15, 359, 15):
     #print("adding tank", i)
     tanks[i] = rot_center(tank,-i)
 
-if singlePlayer != True:
+if SINGLEPLAYER != True:
     server = input('Do you want to start the server?')
     if server.count('y'or'Y'):
         x.bind((hostName,port))
         print("Bound to address ",x.getsockname())
         x.listen(1)
-        conn,addr=x.accept()
-        thisUser=p1Tank
-        otherUser=p2Tank
+        conn,addr = x.accept()
+        thisUser = p1Tank
         pygame.display.set_caption('Player One')
     else:
-        server_IP=input("Server IP:")
+        #server_IP=input("Server IP:")
+        server_IP = '127.0.0.1'
         x.connect((server_IP,port))
-        conn=x
-        thisUser=p2Tank
-        otherUser=p1Tank
+        conn = x
+        thisUser = p2Tank
         pygame.display.set_caption('Player Two')
 else:
     thisUser = p1Tank
-    otherUser = p2Tank
 
 
-clock=pygame.time.Clock()
+clock = pygame.time.Clock()
 
 def receive():
-    global thisUser,otherUser
+    global thisUser, p1Rect, p2Rect, projectiles
     while running:
         msg_buffer = b''
-        new_msg=True
+        new_msg = True
         while True:
 
             if (new_msg and len(msg_buffer) < headerSize) \
@@ -248,24 +278,75 @@ def receive():
 
             if new_msg:
                 #print(f"new msg len:",msg_buffer[:headerSize].decode())
-                msglen=int(msg_buffer[:headerSize])
-                new_msg=False
+                msglen = int(msg_buffer[:headerSize])
+                new_msg = False
 
-            if len(msg_buffer)-headerSize>=msglen: # full message
-                decoded_msg=msg_buffer[headerSize:headerSize+msglen].decode()
+            if len(msg_buffer)-headerSize >= msglen: # full message
+                decoded_msg = msg_buffer[headerSize:headerSize + msglen].decode()
                 #print('decoded_msg_received',decoded_msg)
 
-                new_msg=True
-                msg_buffer=msg_buffer[headerSize+msglen:]
+                if decoded_msg.count('tank'):
+                    x = decoded_msg.split(':')
+                    playerNumber = int(x[1])
+                    for tank in tankList:
+                        if tank.player == playerNumber:
+                            tank.rect.x = float(x[2])
+                            tank.rect.y = float(x[3])
+
+                if decoded_msg.count('rotate'):
+                    x = decoded_msg.split(':')
+                    playerNumber = int(x[1])
+                    print('rotate',playerNumber)
+                    for tank in tankList:
+                        if tank.player == playerNumber:
+                            tank.angle = int(x[2])
+
+                if decoded_msg.count('fireClient'):
+                    x = decoded_msg.split(':')
+                    projectile = Projectile(guid.nextId(),float(x[2]),float(x[3]),
+                        Rect(float(x[4]),float(x[5]), int(x[6]),int(x[7])),int(x[8]))
+                    projectilesLock.acquire()
+                    projectiles[projectile.Id] = projectile
+                    projectilesLock.release()
+                    assert projectiles[projectile.Id].player != 1
+                    print(x[4],x[5],x[6],x[7])
+                    msg = f'fireServer:{projectile.Id}:{projectile.xStep}:\
+                        {projectile.yStep}:{projectile.rect.x}:{projectile.rect.y}:\
+                        {projectile.rect.width}:{projectile.rect.height}:\
+                        {projectile.player}'.encode()
+                    msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
+                    conn.send(msg)
+
+                if decoded_msg.count('fireServer'):
+                    x = decoded_msg.split(':')
+                    projectilesLock.acquire()
+                    projectiles[x[1]]=Projectile(int(x[1]),float(x[2]),float(x[3]),
+                        Rect(float(x[4]),float(x[5]), int(x[6]),int(x[7])),int(x[8]))
+                    projectilesLock.release()
+                    print(x[4],x[5],x[6],x[7])
+
+                if decoded_msg.count('projUpdate'):
+                    assert thisUser.player != 1
+                    x = decoded_msg.split(':')
+
+                    projectilesLock.acquire()
+                    for key, projectile in projectiles.items():
+                        if projectile.Id == int(x[3]):
+                            projectile.rect.x = float(x[1])
+                            projectile.rect.y = float(x[2])
+                    projectilesLock.release()
+
+                new_msg = True
+                msg_buffer = msg_buffer[headerSize+msglen:]
                 #print('new buffer',msg_buffer)
 
 def eventLoop():
-    global running, thisUser, otherUser, projectiles
+    global running, thisUser, otherUser, projectiles, projectile
     pygame.key.set_repeat(75 , 50)
     pygame.display.init()
     while running:
 
-        event=pygame.event.poll()
+        event = pygame.event.poll()
 
         if event.type == pygame.NOEVENT:
             time.sleep(0.01)
@@ -276,7 +357,7 @@ def eventLoop():
 
         elif event.type == pygame.KEYDOWN:
 
-            if event.key==pygame.K_ESCAPE:
+            if event.key == pygame.K_ESCAPE:
                 # TODO send quit to client
                 running = False
 
@@ -291,8 +372,10 @@ def eventLoop():
                         tankSpeed*math.cos(radians)),screenHeight -
                         thisUser.rect.height)
 
-                    if singlePlayer != True:
-                        msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
+                    if SINGLEPLAYER != True:
+                        msg=f'tank:{thisUser.player}:{thisUser.rect.x}:\
+                            {thisUser.rect.y}'.encode()
+                        msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
                         conn.send(msg)
                 # DOWN
                 if event.key == pygame.K_s: # down
@@ -301,69 +384,113 @@ def eventLoop():
                         tankSpeed*math.sin(radians)),screenWidth -
                         thisUser.rect.width)
                     thisUser.rect.y = min(max(0,thisUser.rect.y +
-                        tankSpeed*math.cos(radians)),screenHeight -
+                        tankSpeed * math.cos(radians)),screenHeight -
                         thisUser.rect.height)
-                    if singlePlayer != True:
-                        msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
+                    if SINGLEPLAYER != True:
+                        msg=f'tank:{thisUser.player}:{thisUser.rect.x}:\
+                            {thisUser.rect.y}'.encode()
+                        msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
                         conn.send(msg)
                 # ROTATE CLOCKWISE
                 if event.key == pygame.K_d:
                     thisUser.angle = (thisUser.angle + 15) % 360
-                    if singlePlayer != True:
-                        msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
+                    if SINGLEPLAYER != True:
+                        msg=f'rotate:{thisUser.player}:{thisUser.angle}'.encode()
+                        msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
                         conn.send(msg)
                 # ROTATE COUNTER-CLOCKWISE
                 if event.key == pygame.K_a:
                     thisUser.angle = (thisUser.angle - 15) % 360
-                    if singlePlayer != True:
-                        msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
+                    if SINGLEPLAYER != True:
+                        msg = f'rotate:{thisUser.player}:{thisUser.angle}'.encode()
+                        msg = bytes(f"{len(msg):<{headerSize}}",'utf-8') + msg
                         conn.send(msg)
                 # FIRE
                 if event.key == pygame.K_SPACE:
                     currTime = time.time()
                     if thisUser.lastFired < currTime - reloadSpeed:
                         thisUser.lastFired = currTime
-                        radians=math.radians(thisUser.angle)
-                        x=thisUser.rect.x+(thisUser.rect.width-projectileSize)/2
-                        y=thisUser.rect.y+(thisUser.rect.height-projectileSize)/2
+                        radians = math.radians(thisUser.angle)
+                        x = thisUser.rect.x+(thisUser.rect.width-projectileSize)/2
+                        y = thisUser.rect.y+(thisUser.rect.height-projectileSize)/2
                         #print(math.cos(radians),math.sin(radians))
-                        projectiles.append(
-                            Projectile(projectileSpeed*math.sin(radians),
-                            -projectileSpeed*math.cos(radians),
-                            Rect(x,y,projectileSize,projectileSize),thisUser))                
-                        if singlePlayer != True:                
-                            msg=f'paddle:{thisUser.x}:{thisUser.y}'.encode()
-                            conn.send(msg)
+                        projectile = Projectile(guid.nextId(),
+                            projectileSpeed*math.sin(radians),
+                            -projectileSpeed * math.cos(radians),
+                            Rect(x, y, projectileSize, projectileSize),
+                            thisUser.player)
 
+                        if SINGLEPLAYER == False:
+                            if thisUser.player==1:
+                                projectilesLock.acquire()
+                                projectiles[projectile.Id] = projectile
+                                projectilesLock.release()
+                                msg=f'fireServer:{projectile.Id}:{projectile.xStep}:\
+                                    {projectile.yStep}:{projectile.rect.x}:\
+                                    {projectile.rect.y}:{projectile.rect.width}:\
+                                    {projectile.rect.height}:\
+                                    {projectile.player}'.encode()
+                                msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
+                                conn.send(msg)
+                            else:
+                                projectile.Id = -1
+                                msg=f'fireClient:{projectile.Id}:{projectile.xStep}:\
+                                {projectile.yStep}:{projectile.rect.x}:\
+                                {projectile.rect.y}:{projectile.rect.width}:\
+                                {projectile.rect.height}:{projectile.player}'.encode()
+                                msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
+                                conn.send(msg)
 
 def projectile():
     global projectiles
     global radians
     global textP1Lives, textP2Lives
     global playing
+
+    assert thisUser.player == 1
+
     while running:
         if playing:
             #print('projectile thread',len(projectiles))
-            for projectile in projectiles[:]:
+            keysToRmv = []
+            projectilesLock.acquire()
+            for key, projectile in projectiles.items():
                 if projectile.rect.x >= screenWidth \
                     or projectile.rect.x+projectileSize <= 0 \
                     or projectile.rect.y+projectileSize <= 0 \
                     or projectile.rect.y >= screenHeight:
-                    projectiles.remove(projectile)
+
+                    #REMOVE
+                    keysToRmv.append(key)
                 for tank in tankList:
                     if projectile.collideRect(tank,20):
-                        p2Tank.reduceLife()
+
+                        #REMOVE
+                        tank.reduceLife()
+                        keysToRmv.append(key)
                         textP2Lives = \
                             font.render(f'Player 2 Lives: {p2Tank.lives}',
                             True, black, white)
-                        projectiles.remove(projectile)
-                        if(p2Tank.lives==0) :
+                        textP1Lives = \
+                            font.render(f'Player 1 Lives: {p1Tank.lives}',
+                            True, black, white)
+
+                        if p2Tank.lives == 0:
                             playing = False
+                        if p1Tank.lives == 0:
+                            playing = False
+
+                #UPDATE
                 projectile.rect.x += projectile.xStep
                 projectile.rect.y += projectile.yStep
-        else:
-            if len(projectiles) > 0:
-                projectiles = []
+                msg = f'projUpdate:{projectile.rect.x}:{projectile.rect.y}:\
+                    {projectile.Id}'.encode()
+                msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
+                conn.send(msg)
+
+            for key in keysToRmv:
+                projectiles.pop(key)
+            projectilesLock.release()
 
         time.sleep(0.01)
 
@@ -374,8 +501,10 @@ def render():
     screen.blit(tanks[p2Tank.angle],p2Tank.rect.toPygame())
 
     if playing:
-        for i in projectiles:
-            pygame.draw.rect(screen,red,i.rect.toPygame())
+        projectilesLock.acquire()
+        for key , proj in projectiles.items():
+            pygame.draw.rect(screen,red,proj.rect.toPygame())
+        projectilesLock.release()
     else:
         screen.blit(textGameOver,((screenWidth-textGameOver.get_width())//2,
             screenHeight//2))
@@ -387,10 +516,11 @@ def render():
 event_thread = threading.Thread(target=eventLoop)
 event_thread.start()
 
-proj_thread = threading.Thread(target=projectile)
-proj_thread.start()
+if thisUser.player == 1:
+    proj_thread = threading.Thread(target=projectile)
+    proj_thread.start()
 
-if singlePlayer != True:
+if SINGLEPLAYER != True:
     recv_thread = threading.Thread(target=receive)
     recv_thread.start()
 
