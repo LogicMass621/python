@@ -245,7 +245,6 @@ textP2Lives = font.render(f'Player 2 Lives: {p2Tank.lives}', True, black, white)
 textGameOver = font.render('Game Over', True, black, white)
 
 for i in range(15, 359, 15):
-    #print("adding tank", i)
     tanks[i] = rot_center(tank,-i)
 
 if SINGLEPLAYER != True:
@@ -280,16 +279,13 @@ def receive():
                 or (not new_msg and len(msg_buffer) < headerSize+msglen):
                 msg = conn.recv(16)
                 msg_buffer += msg
-                #print('recv',msg, 'buffer', msg_buffer)
 
             if new_msg:
-                #print(f"new msg len:",msg_buffer[:headerSize].decode())
                 msglen = int(msg_buffer[:headerSize])
                 new_msg = False
 
             if len(msg_buffer)-headerSize >= msglen: # full message
                 decoded_msg = msg_buffer[headerSize:headerSize + msglen].decode()
-                #print('decoded_msg_received',decoded_msg)
 
                 if decoded_msg.count('tank'):
                     x = decoded_msg.split(':')
@@ -302,7 +298,6 @@ def receive():
                 if decoded_msg.count('rotate'):
                     x = decoded_msg.split(':')
                     playerNumber = int(x[1])
-                    print('rotate',playerNumber)
                     for tank in tankList:
                         if tank.player == playerNumber:
                             tank.angle = int(x[2])
@@ -315,7 +310,6 @@ def receive():
                     projectiles[projectile.Id] = projectile
                     projectilesLock.release()
                     assert projectiles[projectile.Id].player != 1
-                    print(x[4],x[5],x[6],x[7])
                     msg = f'fireServer:{projectile.Id}:{projectile.xStep}:\
                         {projectile.yStep}:{projectile.rect.x}:{projectile.rect.y}:\
                         {projectile.rect.width}:{projectile.rect.height}:\
@@ -329,7 +323,6 @@ def receive():
                     projectiles[x[1]]=Projectile(int(x[1]),float(x[2]),float(x[3]),
                         Rect(float(x[4]),float(x[5]), int(x[6]),int(x[7])),int(x[8]))
                     projectilesLock.release()
-                    print(x[4],x[5],x[6],x[7])
 
                 if decoded_msg.count('projUpdate'):
                     assert thisUser.player != 1
@@ -351,17 +344,14 @@ def receive():
                     textP1Lives = \
                         font.render(f'Player 1 Lives: {p1Tank.lives}',
                         True, black, white)
-                    print(p1Tank.lives,p2Tank.lives,x[1],x[2])
                 if decoded_msg.count('projRemove'):
                     x=decoded_msg.split(':')
                     projectilesLock.acquire()
                     projectiles.pop(x[1])
                     projectilesLock.release()
-                    print(len(projectiles))
 
                 new_msg = True
                 msg_buffer = msg_buffer[headerSize+msglen:]
-                #print('new buffer',msg_buffer)
 
 def eventLoop():
     global running, thisUser, otherUser, projectiles, projectile
@@ -436,7 +426,6 @@ def eventLoop():
                         radians = math.radians(thisUser.angle)
                         x = thisUser.rect.x+(thisUser.rect.width-projectileSize)/2
                         y = thisUser.rect.y+(thisUser.rect.height-projectileSize)/2
-                        #print(math.cos(radians),math.sin(radians))
                         projectile = Projectile(guid.nextId(),
                             projectileSpeed*math.sin(radians),
                             -projectileSpeed * math.cos(radians),
@@ -474,7 +463,6 @@ def projectile():
 
     while running:
         if playing:
-            #print('projectile thread',len(projectiles))
             keysToRmv = []
             projectilesLock.acquire()
             for key, projectile in projectiles.items():
