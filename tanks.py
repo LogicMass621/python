@@ -229,7 +229,7 @@ headerSize = 10
 tanks = {}
 tanks[0] = tank
 tankList = [p1Tank,p2Tank]
-tankSpeed = 10
+tankSpeed = 5
 
 projectileSize = 10
 projectiles = {}
@@ -244,7 +244,8 @@ textP1Lives = font.render(f'Player 1 Lives: {p1Tank.lives}', True, black, white)
 textP2Lives = font.render(f'Player 2 Lives: {p2Tank.lives}', True, black, white)
 textGameOver = font.render('Game Over', True, black, white)
 
-for i in range(15, 359, 15):
+tankRotationSpeed = 5
+for i in range(tankRotationSpeed, 359, tankRotationSpeed):
     tanks[i] = rot_center(tank,-i)
 
 if SINGLEPLAYER != True:
@@ -357,7 +358,7 @@ def receive():
 
 def eventLoop():
     global running, thisUser, otherUser, projectiles, projectile
-    pygame.key.set_repeat(75 , 50)
+    pygame.key.set_repeat(50, 28)
     pygame.display.init()
     while running:
 
@@ -408,14 +409,14 @@ def eventLoop():
                         conn.send(msg)
                 # ROTATE CLOCKWISE
                 if event.key == pygame.K_d:
-                    thisUser.angle = (thisUser.angle + 15) % 360
+                    thisUser.angle = (thisUser.angle + tankRotationSpeed) % 360
                     if SINGLEPLAYER != True:
                         msg=f'rotate:{thisUser.player}:{thisUser.angle}'.encode()
                         msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
                         conn.send(msg)
                 # ROTATE COUNTER-CLOCKWISE
                 if event.key == pygame.K_a:
-                    thisUser.angle = (thisUser.angle - 15) % 360
+                    thisUser.angle = (thisUser.angle - tankRotationSpeed) % 360
                     if SINGLEPLAYER != True:
                         msg = f'rotate:{thisUser.player}:{thisUser.angle}'.encode()
                         msg = bytes(f"{len(msg):<{headerSize}}",'utf-8') + msg
@@ -434,7 +435,11 @@ def eventLoop():
                             Rect(x, y, projectileSize, projectileSize),
                             thisUser.player)
 
-                        if SINGLEPLAYER == False:
+                        if SINGLEPLAYER == True:
+                            projectilesLock.acquire()
+                            projectiles[projectile.Id] = projectile
+                            projectilesLock.release()
+                        else:
                             if thisUser.player==1:
                                 projectilesLock.acquire()
                                 projectiles[projectile.Id] = projectile
