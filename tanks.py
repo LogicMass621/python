@@ -269,7 +269,7 @@ else:
 clock = pygame.time.Clock()
 
 def receive():
-    global thisUser, projectiles, p1Tank, p2Tank, textP2Lives, textP1Lives
+    global thisUser, projectiles, p1Tank, p2Tank, textP2Lives, textP1Lives, playing
     while running:
         msg_buffer = b''
         new_msg = True
@@ -349,6 +349,8 @@ def receive():
                     projectilesLock.acquire()
                     projectiles.pop(x[1])
                     projectilesLock.release()
+                if decoded_msg.count('Gameover'):
+                    playing=False
 
                 new_msg = True
                 msg_buffer = msg_buffer[headerSize+msglen:]
@@ -489,11 +491,11 @@ def projectile():
                             font.render(f'Player 1 Lives: {p1Tank.lives}',
                             True, black, white)
 
-                        if p2Tank.lives == 0:
+                        if p2Tank.lives == 0 or p1Tank.lives == 0:
                             playing = False
-                        if p1Tank.lives == 0:
-                            playing = False
-
+                            msg =f'Gameover'.encode()
+                            msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
+                            conn.send(msg)
                 #UPDATE
                 projectile.rect.x += projectile.xStep
                 projectile.rect.y += projectile.yStep
