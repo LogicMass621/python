@@ -258,8 +258,7 @@ if SINGLEPLAYER != True:
         thisUser = p1Tank
         pygame.display.set_caption('Player One')
     else:
-        #server_IP=input("Server IP:")
-        server_IP = '127.0.0.1'
+        server_IP=input("Server IP:")
         x.connect((server_IP,port))
         conn = x
         thisUser = p2Tank
