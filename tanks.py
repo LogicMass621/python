@@ -237,6 +237,7 @@ projectilesLock = threading.Lock()
 
 projectileSpeed = 4
 reloadSpeed = 1
+clock=pygame.time.Clock()
 
 pygame.font.init()
 font = pygame.font.Font('freesansbold.ttf', 20)
@@ -467,7 +468,6 @@ def projectile():
     global playing
 
     assert thisUser.player == 1
-
     while running:
         if playing:
             keysToRmv = []
@@ -514,6 +514,7 @@ def projectile():
                 msg =f'projRemove:{key}'.encode()
                 msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
                 conn.send(msg)
+
             projectilesLock.release()
 
         time.sleep(0.01)
@@ -535,7 +536,7 @@ def render():
 
     screen.blit(textP1Lives,(0,0))
     screen.blit(textP2Lives, (screenWidth-textP2Lives.get_width(),0))
-    pygame.display.update()
+    pygame.display.flip()
 
 event_thread = threading.Thread(target=eventLoop)
 event_thread.start()
@@ -550,6 +551,7 @@ if SINGLEPLAYER != True:
 
 while running:
     render()
+    clock.tick(60)
 
 sys.exit()
 pygame.quit()
