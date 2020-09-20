@@ -150,11 +150,11 @@ def rot_center(image, angle):
     return rot_image
 
 class Tank:
-    def __init__(self, player, rect, angle):
+    def __init__(self, player, rect, angle, lives):
         self.__rect = rect
         self.__angle = angle
         self.__lastFired = 0
-        self.__lives = 5
+        self.__lives = lives
         self.__player=player
 
 
@@ -174,6 +174,10 @@ class Tank:
     @property
     def player(self):
         return self.__player
+    @property
+    def lives(self):
+        return self.__lives
+    
 
     @rect.setter
     def rect(self,rect):
@@ -186,7 +190,10 @@ class Tank:
         self.__lastFired = time
     @player.setter
     def player(self,player):
-        self.__player=player
+        self.__player = player
+    @lives.setter
+    def lives(self, lives):
+        self.__lives = lives
     def reduceLife(self):
         self.__lives -= 1
 
@@ -211,8 +218,8 @@ screen = pygame.display.set_mode((screenWidth, screenHeight))
 tank = pygame.image.load('tank.png')
 tankSize = tank.get_width()
 p1Tank = Tank(1, Rect(screenWidth-tankSize*2,(screenHeight-tankSize)/2,
-            tankSize,tankSize), 0)
-p2Tank = Tank(2, Rect(tankSize,(screenHeight-tankSize)/2,tankSize,tankSize),0)
+            tankSize,tankSize), 0, 5)
+p2Tank = Tank(2, Rect(tankSize,(screenHeight-tankSize)/2,tankSize,tankSize), 0, 5)
 
 running = True
 playing = True
@@ -264,7 +271,7 @@ else:
 clock = pygame.time.Clock()
 
 def receive():
-    global thisUser, p1Rect, p2Rect, projectiles
+    global thisUser, projectiles, p1Tank, p2Tank, textP2Lives, textP1Lives
     while running:
         msg_buffer = b''
         new_msg = True
@@ -335,6 +342,23 @@ def receive():
                             projectile.rect.x = float(x[1])
                             projectile.rect.y = float(x[2])
                     projectilesLock.release()
+                if decoded_msg.count('livesUpdate'):
+                    x=decoded_msg.split(':')
+                    p1Tank.lives=x[1]
+                    p2Tank.lives=x[2]
+                    textP2Lives = \
+                        font.render(f'Player 2 Lives: {p2Tank.lives}',
+                        True, black, white)
+                    textP1Lives = \
+                        font.render(f'Player 1 Lives: {p1Tank.lives}',
+                        True, black, white)
+                    print(p1Tank.lives,p2Tank.lives,x[1],x[2])
+                if decoded_msg.count('projRemove'):
+                    x=decoded_msg.split(':')
+                    projectilesLock.acquire()
+                    projectiles.pop(x[1])
+                    projectilesLock.release()
+                    print(len(projectiles))
 
                 new_msg = True
                 msg_buffer = msg_buffer[headerSize+msglen:]
@@ -457,7 +481,7 @@ def projectile():
             for key, projectile in projectiles.items():
                 if projectile.rect.x >= screenWidth \
                     or projectile.rect.x+projectileSize <= 0 \
-                    or projectile.rect.y+projectileSize <= 0 \
+                    or projectile.rect.y+projectileSize <= textP1Lives.get_height() \
                     or projectile.rect.y >= screenHeight:
 
                     #REMOVE
@@ -467,6 +491,9 @@ def projectile():
 
                         #REMOVE
                         tank.reduceLife()
+                        msg =f'livesUpdate:{p1Tank.lives}:{p2Tank.lives}'.encode()
+                        msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
+                        conn.send(msg)
                         keysToRmv.append(key)
                         textP2Lives = \
                             font.render(f'Player 2 Lives: {p2Tank.lives}',
@@ -490,6 +517,9 @@ def projectile():
 
             for key in keysToRmv:
                 projectiles.pop(key)
+                msg =f'projRemove:{key}'.encode()
+                msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
+                conn.send(msg)
             projectilesLock.release()
 
         time.sleep(0.01)
