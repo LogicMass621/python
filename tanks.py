@@ -322,6 +322,7 @@ def receive():
                     projectilesLock.acquire()
                     projectiles[projectile.Id] = projectile
                     projectilesLock.release()
+                    fireSound.play()
                     assert projectiles[projectile.Id].player != 1
                     msg = f'fireServer:{projectile.Id}:{projectile.xStep}:\
                         {projectile.yStep}:{projectile.rect.x}:{projectile.rect.y}:\
