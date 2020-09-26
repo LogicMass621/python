@@ -249,9 +249,9 @@ clock=pygame.time.Clock()
 
 pygame.font.init()
 font = pygame.font.Font('freesansbold.ttf', 20)
-textP1Lives = font.render(f'Player 1 Lives: {p1Tank.lives}', True, black, white)
-textP2Lives = font.render(f'Player 2 Lives: {p2Tank.lives}', True, black, white)
-textGameOver = font.render('Game Over', True, black, white)
+textP1Lives = font.render(f'Player 1 Lives: {p1Tank.lives}', True, black, None)
+textP2Lives = font.render(f'Player 2 Lives: {p2Tank.lives}', True, black, None)
+textGameOver = font.render('Game Over', True, black, None)
 
 tankRotationSpeed = 5
 for i in range(tankRotationSpeed, 359, tankRotationSpeed):
@@ -357,10 +357,10 @@ def receive():
                     p2Tank.lives=x[2]
                     textP2Lives = \
                         font.render(f'Player 2 Lives: {p2Tank.lives}',
-                        True, black, white)
+                        True, black, None)
                     textP1Lives = \
                         font.render(f'Player 1 Lives: {p1Tank.lives}',
-                        True, black, white)
+                        True, black, None)
                 if decoded_msg.count('projRemove'):
                     x=decoded_msg.split(':')
                     projectilesLock.acquire()
@@ -509,10 +509,10 @@ def projectile():
                         keysToRmv.append(key)
                         textP2Lives = \
                             font.render(f'Player 2 Lives: {p2Tank.lives}',
-                            True, black, white)
+                            True, black, None)
                         textP1Lives = \
                             font.render(f'Player 1 Lives: {p1Tank.lives}',
-                            True, black, white)
+                            True, black, None)
 
                         if p2Tank.lives == 0 or p1Tank.lives == 0:
                             playing = False
