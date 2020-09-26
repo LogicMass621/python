@@ -5,6 +5,7 @@ import sys
 import socket
 import time
 import math
+import statistics
 
 class Rect:
 
@@ -215,11 +216,12 @@ screenWidth = 800
 screenHeight = 800
 screen = pygame.display.set_mode((screenWidth, screenHeight))
 
-tank = pygame.image.load('tank.png')
+tank = pygame.image.load('tankGreen.png')
 tankSize = tank.get_width()
 p1Tank = Tank(1, Rect(screenWidth-tankSize*2,(screenHeight-tankSize)/2,
-            tankSize,tankSize), 0, 5)
-p2Tank = Tank(2, Rect(tankSize,(screenHeight-tankSize)/2,tankSize,tankSize), 0, 5)
+            tankSize,tankSize), 270, 5)
+p2Tank = Tank(2, Rect(tankSize,(screenHeight-tankSize)/2,tankSize,tankSize), 90, 5)
+background=pygame.image.load('tankBackground.png')
 
 running = True
 playing = True
@@ -235,7 +237,7 @@ projectileSize = 10
 projectiles = {}
 projectilesLock = threading.Lock()
 
-projectileSpeed = 4
+projectileSpeed = 1.0
 reloadSpeed = 1
 clock=pygame.time.Clock()
 
@@ -279,7 +281,7 @@ def receive():
 
             if (new_msg and len(msg_buffer) < headerSize) \
                 or (not new_msg and len(msg_buffer) < headerSize+msglen):
-                msg = conn.recv(16)
+                msg = conn.recv(1024)
                 msg_buffer += msg
 
             if new_msg:
@@ -366,7 +368,7 @@ def eventLoop():
         event = pygame.event.poll()
 
         if event.type == pygame.NOEVENT:
-            time.sleep(0.01)
+            time.sleep(0.002)
 
         elif event.type == pygame.QUIT:
             # TODO send quit to client
@@ -385,7 +387,7 @@ def eventLoop():
                     thisUser.rect.x = min(max(0,thisUser.rect.x +
                         tankSpeed*math.sin(radians)),screenWidth -
                         thisUser.rect.width)
-                    thisUser.rect.y = min(max(0,thisUser.rect.y -
+                    thisUser.rect.y = min(max(0+textP1Lives.get_height()/2,thisUser.rect.y -
                         tankSpeed*math.cos(radians)),screenHeight -
                         thisUser.rect.height)
 
@@ -400,7 +402,7 @@ def eventLoop():
                     thisUser.rect.x = min(max(0,thisUser.rect.x -
                         tankSpeed*math.sin(radians)),screenWidth -
                         thisUser.rect.width)
-                    thisUser.rect.y = min(max(0,thisUser.rect.y +
+                    thisUser.rect.y = min(max(0+textP1Lives.get_height()/2,thisUser.rect.y +
                         tankSpeed * math.cos(radians)),screenHeight -
                         thisUser.rect.height)
                     if SINGLEPLAYER != True:
@@ -517,10 +519,11 @@ def projectile():
 
             projectilesLock.release()
 
-        time.sleep(0.01)
+        time.sleep(0.002)
 
 
 def render():
+    #screen.blit(background,(0,0,800,800))
     screen.fill(white)
     screen.blit(tanks[p1Tank.angle],p1Tank.rect.toPygame())
     screen.blit(tanks[p2Tank.angle],p2Tank.rect.toPygame())
@@ -548,10 +551,16 @@ if thisUser.player == 1:
 if SINGLEPLAYER != True:
     recv_thread = threading.Thread(target=receive)
     recv_thread.start()
-
+fps=[]
 while running:
+
     render()
+    fps.append(clock.get_fps())
     clock.tick(60)
+    if len(fps) == 60:
+        print('mean:',round(statistics.mean(fps),2),'median:',round(statistics.median(fps),2),
+            'min:',round(min(fps),2),'max:',round(max(fps),2))
+        fps=[]
 
 sys.exit()
 pygame.quit()
