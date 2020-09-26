@@ -333,10 +333,12 @@ def receive():
                 if decoded_msg.count('fireServer'):
                     x = decoded_msg.split(':')
                     projectilesLock.acquire()
-                    projectiles[x[1]]=Projectile(int(x[1]),float(x[2]),float(x[3]),
+                    projectile = Projectile(int(x[1]),float(x[2]),float(x[3]),
                         Rect(float(x[4]),float(x[5]), int(x[6]),int(x[7])),int(x[8]))
+                    projectiles[x[1]]=projectile
                     projectilesLock.release()
-                    fireSound.play()
+                    if projectile.player == 1:
+                        fireSound.play()
 
                 if decoded_msg.count('projUpdate'):
                     assert thisUser.player != 1
@@ -438,6 +440,7 @@ def eventLoop():
                 if event.key == pygame.K_SPACE:
                     currTime = time.time()
                     if thisUser.lastFired < currTime - reloadSpeed:
+                        fireSound.play()
                         thisUser.lastFired = currTime
                         radians = math.radians(thisUser.angle)
                         x = thisUser.rect.x+(thisUser.rect.width-projectileSize)/2
@@ -471,7 +474,6 @@ def eventLoop():
                                 {projectile.rect.y}:{projectile.rect.width}:\
                                 {projectile.rect.height}:{projectile.player}'.encode()
                                 msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
-                                fireSound.play()
                                 conn.send(msg)
 
 def projectile():
