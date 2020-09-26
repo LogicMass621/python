@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import pygame
+import prctl
 import threading
 import sys
 import socket
@@ -215,6 +216,8 @@ red = (255,0,0)
 screenWidth = 800
 screenHeight = 800
 pygame.display.init()
+pygame.mixer.init()
+
 screen = pygame.display.set_mode((screenWidth, screenHeight))
 
 tank = pygame.image.load('tankGreen.png')
@@ -224,10 +227,11 @@ p1Tank = Tank(1, Rect(screenWidth-tankSize*2,(screenHeight-tankSize)/2,
 p2Tank = Tank(2, Rect(tankSize,(screenHeight-tankSize)/2,tankSize,tankSize), 90, 5)
 background=pygame.image.load('tankBackground.png')
 background=pygame.transform.scale(background,(800,800))
+fireSound=pygame.mixer.Sound('tankSound.wav')
 
 running = True
 playing = True
-SINGLEPLAYER = True
+SINGLEPLAYER = False
 headerSize = 10
 
 tanks = {}
@@ -263,7 +267,9 @@ if SINGLEPLAYER != True:
         thisUser = p1Tank
         pygame.display.set_caption('Player One')
     else:
-        server_IP=input("Server IP:")
+        input_IP=input("Server IP:")
+        if input_IP:
+            server_IP = input_IP
         x.connect((server_IP,port))
         conn = x
         thisUser = p2Tank
@@ -276,6 +282,7 @@ clock = pygame.time.Clock()
 
 def receive():
     global thisUser, projectiles, p1Tank, p2Tank, textP2Lives, textP1Lives, playing
+    prctl.set_name("recv_thread")
     while running:
         msg_buffer = b''
         new_msg = True
@@ -329,6 +336,7 @@ def receive():
                     projectiles[x[1]]=Projectile(int(x[1]),float(x[2]),float(x[3]),
                         Rect(float(x[4]),float(x[5]), int(x[6]),int(x[7])),int(x[8]))
                     projectilesLock.release()
+                    fireSound.play()
 
                 if decoded_msg.count('projUpdate'):
                     assert thisUser.player != 1
@@ -363,6 +371,7 @@ def receive():
 
 def eventLoop():
     global running, thisUser, otherUser, projectiles, projectile
+    prctl.set_name("event_thread")
     pygame.key.set_repeat(50, 28)
     while running:
 
@@ -462,6 +471,7 @@ def eventLoop():
                                 {projectile.rect.y}:{projectile.rect.width}:\
                                 {projectile.rect.height}:{projectile.player}'.encode()
                                 msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
+                                fireSound.play()
                                 conn.send(msg)
 
 def projectile():
@@ -470,6 +480,7 @@ def projectile():
     global textP1Lives, textP2Lives
     global playing
 
+    prctl.set_name("proj_thread")
     assert thisUser.player == 1
     while running:
         if playing:
@@ -547,15 +558,20 @@ def render():
     pygame.display.flip()
 
 event_thread = threading.Thread(target=eventLoop)
+event_thread.name = 'event_thread'
 event_thread.start()
 
 if thisUser.player == 1:
     proj_thread = threading.Thread(target=projectile)
+    proj_thread.name = 'proj_thread'
     proj_thread.start()
 
 if SINGLEPLAYER != True:
     recv_thread = threading.Thread(target=receive)
+    recv_thread.name = 'recv_thread'
+    recv_thread.daemon = True
     recv_thread.start()
+    
 fps=[]
 while running:
 
