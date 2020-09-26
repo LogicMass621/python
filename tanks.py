@@ -214,6 +214,7 @@ red = (255,0,0)
 
 screenWidth = 800
 screenHeight = 800
+pygame.display.init()
 screen = pygame.display.set_mode((screenWidth, screenHeight))
 
 tank = pygame.image.load('tankGreen.png')
@@ -222,6 +223,7 @@ p1Tank = Tank(1, Rect(screenWidth-tankSize*2,(screenHeight-tankSize)/2,
             tankSize,tankSize), 270, 5)
 p2Tank = Tank(2, Rect(tankSize,(screenHeight-tankSize)/2,tankSize,tankSize), 90, 5)
 background=pygame.image.load('tankBackground.png')
+background=pygame.transform.scale(background,(800,800))
 
 running = True
 playing = True
@@ -362,7 +364,6 @@ def receive():
 def eventLoop():
     global running, thisUser, otherUser, projectiles, projectile
     pygame.key.set_repeat(50, 28)
-    pygame.display.init()
     while running:
 
         event = pygame.event.poll()
@@ -527,8 +528,8 @@ def projectile():
 
 
 def render():
-    #screen.blit(background,(0,0,800,800))
-    screen.fill(white)
+    screen.blit(background,(0,0,800,800))
+    #screen.fill((220,190,150))
     screen.blit(tanks[p1Tank.angle],p1Tank.rect.toPygame())
     screen.blit(tanks[p2Tank.angle],p2Tank.rect.toPygame())
 
