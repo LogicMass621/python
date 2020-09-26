@@ -225,7 +225,7 @@ background=pygame.image.load('tankBackground.png')
 
 running = True
 playing = True
-SINGLEPLAYER = False
+SINGLEPLAYER = True
 headerSize = 10
 
 tanks = {}
@@ -487,9 +487,10 @@ def projectile():
 
                         #REMOVE
                         tank.reduceLife()
-                        msg =f'livesUpdate:{p1Tank.lives}:{p2Tank.lives}'.encode()
-                        msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
-                        conn.send(msg)
+                        if SINGLEPLAYER!=True:
+                            msg =f'livesUpdate:{p1Tank.lives}:{p2Tank.lives}'.encode()
+                            msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
+                            conn.send(msg)
                         keysToRmv.append(key)
                         textP2Lives = \
                             font.render(f'Player 2 Lives: {p2Tank.lives}',
@@ -500,22 +501,25 @@ def projectile():
 
                         if p2Tank.lives == 0 or p1Tank.lives == 0:
                             playing = False
-                            msg =f'Gameover'.encode()
-                            msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
-                            conn.send(msg)
+                            if SINGLEPLAYER != True:
+                                msg =f'Gameover'.encode()
+                                msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
+                                conn.send(msg)
                 #UPDATE
                 projectile.rect.x += projectile.xStep
                 projectile.rect.y += projectile.yStep
-                msg = f'projUpdate:{projectile.rect.x}:{projectile.rect.y}:\
-                    {projectile.Id}'.encode()
-                msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
-                conn.send(msg)
+                if SINGLEPLAYER!=True:
+                    msg = f'projUpdate:{projectile.rect.x}:{projectile.rect.y}:\
+                        {projectile.Id}'.encode()
+                    msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
+                    conn.send(msg)
 
             for key in keysToRmv:
                 projectiles.pop(key)
-                msg =f'projRemove:{key}'.encode()
-                msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
-                conn.send(msg)
+                if SINGLEPLAYER!=True:
+                    msg =f'projRemove:{key}'.encode()
+                    msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
+                    conn.send(msg)
 
             projectilesLock.release()
 
