@@ -243,7 +243,7 @@ projectileSize = 10
 projectiles = {}
 projectilesLock = threading.Lock()
 
-projectileSpeed = 1.0
+projectileSpeed = 4.0
 reloadSpeed = 1
 clock=pygame.time.Clock()
 
@@ -381,7 +381,7 @@ def eventLoop():
         event = pygame.event.poll()
 
         if event.type == pygame.NOEVENT:
-            time.sleep(0.002)
+            time.sleep(0.008)
 
         elif event.type == pygame.QUIT:
             # TODO send quit to client
@@ -538,7 +538,7 @@ def projectile():
 
             projectilesLock.release()
 
-        time.sleep(0.002)
+        time.sleep(0.008)
 
 
 def render():
