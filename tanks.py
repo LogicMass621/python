@@ -246,6 +246,7 @@ projectilesLock = threading.Lock()
 projectileSpeed = 4.0
 reloadSpeed = 1
 clock=pygame.time.Clock()
+gameover=False
 
 pygame.font.init()
 font = pygame.font.Font('freesansbold.ttf', 20)
@@ -257,9 +258,12 @@ tankRotationSpeed = 5
 for i in range(tankRotationSpeed, 359, tankRotationSpeed):
     tanks[i] = rot_center(tank,-i)
 
+sys.stdout.write("\x1b]2;\x07")
+
 if SINGLEPLAYER != True:
     server = input('Do you want to start the server?')
     if server.count('y'or'Y'):
+        sys.stdout.write("\x1b]2;Player One\x07")
         x.bind((hostName,port))
         print("Bound to address ",x.getsockname())
         x.listen(1)
@@ -270,18 +274,61 @@ if SINGLEPLAYER != True:
         input_IP=input("Server IP:")
         if input_IP:
             server_IP = input_IP
+        sys.stdout.write("\x1b]2;Player Two\x07")
         x.connect((server_IP,port))
         conn = x
         thisUser = p2Tank
         pygame.display.set_caption('Player Two')
 else:
     thisUser = p1Tank
-
+    pygame.display.set_caption('Single Player')
+    sys.stdout.write("\x1b]2;Single Player\x07")
 
 clock = pygame.time.Clock()
-
+def restart():
+    global thisUser,p1Tank,p2Tank,textP1Lives,textP2Lives,projectiles,tankList
+    if SINGLEPLAYER == True:
+        playAgain=input('Play Again?')
+        if playAgain.count('y')or playAgain.count('Y'):
+            p1Tank = Tank(1, Rect(screenWidth-tankSize*2,(screenHeight-tankSize)/2,tankSize,tankSize), 270, 5)
+            p2Tank = Tank(2, Rect(tankSize,(screenHeight-tankSize)/2,tankSize,tankSize), 90, 5)
+            tankList.clear()
+            tankList = [p1Tank,p2Tank]
+            thisUser=p1Tank
+            textP1Lives = font.render(f'Player 1 Lives: {p1Tank.lives}', True, black, None)
+            textP2Lives = font.render(f'Player 2 Lives: {p2Tank.lives}', True, black, None)
+            print('finished restart')
+        else:
+            playing=False
+    else:
+        if thisUser.player==1:
+            playAgain=input('Play Again?')
+        if thisUser.player!=1:
+            playAgain='y'
+        if playAgain.count('y'or'Y')and thisUser.player==1:
+            msg=f'restart'.encode()
+            msg=bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
+            conn.send(msg)
+        if playAgain.count('y'or'Y'):
+            p1Tank = Tank(1, Rect(screenWidth-tankSize*2,(screenHeight-tankSize)/2,
+                tankSize,tankSize), 270, 5)
+            p2Tank = Tank(2, Rect(tankSize,(screenHeight-tankSize)/2,tankSize,tankSize), 90, 5)
+            tankList.clear()
+            tankList = [p1Tank,p2Tank]
+            if thisUser.player==1:
+                thisUser=p1Tank
+            else:
+                thisUser=p2Tank
+            textP1Lives = font.render(f'Player 1 Lives: {p1Tank.lives}', True, black, None)
+            textP2Lives = font.render(f'Player 2 Lives: {p2Tank.lives}', True, black, None)
+            print('finished restart')
+        else:
+            playing=False
+            msg =f'Gameover'.encode()
+            msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
+            conn.send(msg)
 def receive():
-    global thisUser, projectiles, p1Tank, p2Tank, textP2Lives, textP1Lives, playing
+    global projectiles, p1Tank, p2Tank, textP2Lives, textP1Lives, playing, gameover
     prctl.set_name("recv_thread")
     while running:
         msg_buffer = b''
@@ -368,6 +415,11 @@ def receive():
                     projectilesLock.release()
                 if decoded_msg.count('Gameover'):
                     playing=False
+                if decoded_msg.count('restart'):
+                    projectilesLock.acquire()
+                    projectiles.clear()
+                    projectilesLock.release()
+                    restart()
 
                 new_msg = True
                 msg_buffer = msg_buffer[headerSize+msglen:]
@@ -479,10 +531,8 @@ def eventLoop():
 
 def projectile():
     global projectiles
-    global radians
-    global textP1Lives, textP2Lives
-    global playing
-
+    global textP1Lives, textP2Lives,clearProj
+    clearProj=False
     prctl.set_name("proj_thread")
     assert thisUser.player == 1
     while running:
@@ -515,11 +565,13 @@ def projectile():
                             True, black, None)
 
                         if p2Tank.lives == 0 or p1Tank.lives == 0:
-                            playing = False
+                            restart()
+                            clearProj = True
                             if SINGLEPLAYER != True:
-                                msg =f'Gameover'.encode()
+                                msg = f'restart'.encode()
                                 msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
                                 conn.send(msg)
+
                 #UPDATE
                 projectile.rect.x += projectile.xStep
                 projectile.rect.y += projectile.yStep
@@ -530,11 +582,16 @@ def projectile():
                     conn.send(msg)
 
             for key in keysToRmv:
-                projectiles.pop(key)
-                if SINGLEPLAYER!=True:
+                if clearProj != True:
+                    projectiles.pop(key)
+                if SINGLEPLAYER!=True and clearProj!=True:
                     msg =f'projRemove:{key}'.encode()
                     msg = bytes(f"{len(msg):<{headerSize}}",'utf-8')+msg
                     conn.send(msg)
+                if clearProj ==True:
+                    projectiles.clear()
+                    clearProj=False
+
 
             projectilesLock.release()
 
@@ -542,8 +599,7 @@ def projectile():
 
 
 def render():
-    screen.blit(background,(0,0,800,800))
-    #screen.fill((220,190,150))
+    screen.blit(background,(0,0,screenWidth,screenHeight))
     screen.blit(tanks[p1Tank.angle],p1Tank.rect.toPygame())
     screen.blit(tanks[p2Tank.angle],p2Tank.rect.toPygame())
 
@@ -577,7 +633,6 @@ if SINGLEPLAYER != True:
     
 fps=[]
 while running:
-
     render()
     fps.append(clock.get_fps())
     clock.tick(60)
