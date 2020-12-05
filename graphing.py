@@ -4,7 +4,7 @@ import pygame
 import math
 
 def compute_y(x):
-    return x
+    return x*x
 
 black = [0, 0, 0]
 red = [255, 0, 0]
@@ -151,7 +151,7 @@ def render():
 
     while x < MaxX:
         y = compute_y(x)
-        pygame.draw.line(screen, graphColor, tran(x2, y2), tran(x, y), 2)
+        pygame.draw.aaline(screen, graphColor, tran(x2, y2), tran(x, y), 2)
         x2 = x
         y2 = y
         x = x + interval
