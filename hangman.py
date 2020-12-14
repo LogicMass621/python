@@ -146,7 +146,7 @@ while running:
     if event.type == pygame.KEYDOWN:
         if event.unicode.isalpha()==True and event.unicode.islower()==True and start == False:
             inputLetter=event.unicode
-        if start==True and event.key != pygame.K_BACKSPACE and (event.unicode.islower() or event.unicode == ' '):
+        if start==True and event.key != pygame.K_BACKSPACE and event.unicode.islower():
             word=word+event.unicode
         if event.key == pygame.K_BACKSPACE and len(word)>0:
             word=word[::-1]
