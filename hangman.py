@@ -46,20 +46,14 @@ class Rect:
     def toPygame(self):
         return self.__pyg_rect
 
-word=str(input("What is the word the challenger will have to find?"))
-print('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
+#word=str(input("What is the word the challenger will have to find?"))
 lives=int(input("How many lives do you want the challenger to have? (int: 1-9)"))
+lives=max(1,min(lives,9))
+word=''
+
 hangmanList={}
-hangmanList[9]=pygame.image.load("Hangman.png")
-hangmanList[8]=pygame.image.load("Hangman2.png")
-hangmanList[7]=pygame.image.load("Hangman3.png")
-hangmanList[6]=pygame.image.load("Hangman4.png")
-hangmanList[5]=pygame.image.load("Hangman5.png")
-hangmanList[4]=pygame.image.load("Hangman6.png")
-hangmanList[3]=pygame.image.load("Hangman7.png")
-hangmanList[2]=pygame.image.load("Hangman8.png")
-hangmanList[1]=pygame.image.load("Hangman9.png")
-hangmanList[0]=pygame.image.load("Hangman10.png")
+for i in range(9):
+    hangmanList[i]=pygame.image.load('Hangman'+str(9-i)+'.png')
 
 white=(255,255,255)
 black=(0,0,0)
@@ -73,9 +67,8 @@ pygame.display.set_caption('Hangman')
 
 hangmanRect= Rect(screenWidth/2-75,10,150,150)
 running = True
+playing = True
 clock=pygame.time.Clock()
-
-
 
 letterList=['']
 guessList={}
@@ -83,24 +76,31 @@ wordList={}
 
 pygame.font.init()
 font = pygame.font.Font('freesansbold.ttf', 14)
+font2 = pygame.font.Font('freesansbold.ttf', 20)
+font3 = pygame.font.Font('freesansbold.ttf', 11)
+startText=font3.render('Enter the word you want the challenger to guess. Then press enter.',True,black,None)
+startWord=font.render(word,True,black,None)
+winText=font2.render('Yay! You Win! Press Any Key To Exit', True, black, None)
+loseText=font2.render('You Lost! Press Any Key To Exit', True, black, None)
 formatLetters=''
 guessText = font.render(f'{formatLetters}', True, black, None)
 guessWord=''
 wordText=font.render(f'{guessWord}', True, black, None)
+alreadyText=font.render('Letter Already Guessed', True, black, None)
+alreadyGuessed=False
+instructionText=font.render('Press a key to guess the letter',True,black,None)
+wordText=font.render('The word was: '+word,True,black,None)
 changeList=True
+start=True
 
-counter=0
-for i in word:
-    wordList[counter]=i
-    guessList[counter]='_'
-    counter+=1
-
+inputLetter=''
 addLetter = False
-reduceLife=False
+reduceLife = False
 youWin = False
+youLose = False
 
 def render():
-    global formatLetters, addLetter, guessWord
+    global formatLetters, addLetter, guessWord, winText, running
 
     screen.fill(white)
     if len(letterList)>0:
@@ -110,57 +110,102 @@ def render():
 
     guessWord=''
     for key,letters in guessList.items():
-        guessWord=guessWord+letters
+        guessWord=guessWord+' '+letters
+    if start == True:
+        screen.blit(startText,(int(screenWidth/2-startText.get_width()/2),int(screenHeight/2-startText.get_height()/2)))
+        startWord=font.render(word,True,black,None)
+        screen.blit(startWord,(int(screenWidth/2-startWord.get_width()/2),int(screenHeight*7/12)))
     if youWin == True:
-        winText=font.render('Yay! You Win', True, black, None)
-
-
+        screen.blit(winText,(int(screenWidth/2-winText.get_width()/2),int(screenHeight/2-winText.get_height()/2)))
+        running = False
+    if youLose == True:
+        wordText=font.render('The word was: '+word,True,black,None)
+        screen.blit(wordText,(int(screenWidth/2-wordText.get_width()/2),int(screenHeight*3/4-wordText.get_height()/4)))
+        screen.blit(loseText,(int(screenWidth/2-loseText.get_width()/2),int(screenHeight/2-loseText.get_height()/2)))
+        running=False
+    
     letterText=font.render(f'{guessWord}', True, black, None)
     guessText = font.render(f'{formatLetters}', True, black, None)
 
-    screen.blit(letterText,(screenWidth/2-letterText.get_width()/2,screenHeight*1/2))
-    screen.blit(guessText,(screenWidth/3,screenHeight*2/3))
-    screen.blit(hangmanList[lives-1],hangmanRect.toPygame())
+    if youWin==False and youLose == False:
+        if alreadyGuessed==True:
+            screen.blit(alreadyText,(int(screenWidth/2-alreadyText.get_width()/2),int(screenHeight*3/4-alreadyText.get_height()/4)))
+        elif start==False:
+            screen.blit(instructionText,(int(screenWidth/2-instructionText.get_width()/2),int(screenHeight*3/4-instructionText.get_height()/4)))
+        screen.blit(letterText,(int(screenWidth/2-letterText.get_width()/2),int(screenHeight*1/2)))
+        screen.blit(guessText,(int(screenWidth/3),int(screenHeight*7/12)))
+    if lives > 0:
+        screen.blit(hangmanList[lives-1],hangmanRect.toPygame())
 
     pygame.display.update()
 
 while running:
     render()
 
-    counter=0
-    if youWin == True:
-        running=False
-    inputLetter=str(input("What letter do you want to guess?"))
-    while len(inputLetter) != 1:
-        print('invalid input')
-        inputLetter=str(input("What letter do you want to guess?"))
+    event = pygame.event.wait()
+    if event.type == pygame.KEYDOWN:
+        if event.unicode.isalpha()==True and event.unicode.islower()==True and start == False:
+            inputLetter=event.unicode
+        if start==True and event.key != pygame.K_BACKSPACE and (event.unicode.islower() or event.unicode == ' '):
+            word=word+event.unicode
+        if event.key == pygame.K_BACKSPACE and len(word)>0:
+            word=word[::-1]
+            word=word.replace(word[0],'',1)
+            word=word[::-1]
+        if (event.key==pygame.K_RETURN or event.key == pygame.K_KP_ENTER) and start == True:
+            start=False
+            counter=0
+            for i in word:
+                wordList[counter]=i
+                guessList[counter]='_'
+                counter+=1
+    if len(inputLetter)> 0 and start==False:
+        alreadyGuessed=False
+        reduceLife=True
+        addList=True
 
-    reduceLife=True
-    addList=True
+        for key, letter in wordList.items():
+            if inputLetter == letter:
+                reduceLife=False
+                guessList[key]=inputLetter
+                addList=False
 
+        for letter in letterList:
+            if letter == inputLetter:
+                alreadyGuessed=True
+                reduceLife=False
+                addList=False
 
-    for key, letter in wordList.items():
-        if inputLetter == letter:
-            reduceLife=False
-            guessList[key]=inputLetter
-            addList=False
+        if reduceLife==True:
+            lives-=1
+        if addList == True:
+            letterList.append(inputLetter)
 
-    if reduceLife==True:
-        lives=lives
-        #lives-=1
-    if addList == True:
-        letterList.append(inputLetter)
-        
-    for letter in letterList:
-        counter+=1
-        if letter == inputLetter and counter != len(letterList):
-            changeList = False
-    if changeList == False and len(letterList)>0:
-        print('Letter Already Guessed')
-        letterList.pop(-1)
-        changeList =True
-    if guessWord == word:
-        youWin == True
-    clock.tick(60)
-sys.exit()
-pygame.quit()
+        counter=0
+        for letter in letterList:
+            counter+=1
+            if letter == inputLetter and counter != len(letterList):
+                changeList = False
+
+        if changeList == False and len(letterList)>0:
+            alreadyGuessed=True
+            changeList =True
+
+        guessWord=''
+        for key,letters in guessList.items():
+            guessWord=guessWord+letters
+
+        if guessWord==word:
+            youWin=True
+
+        if lives == 0:
+            youLose = True
+            
+        inputLetter=''
+
+        clock.tick(60)
+while playing:
+    event = pygame.event.wait()
+    if event.type == pygame.KEYDOWN:
+        sys.exit()
+        pygame.quit()
