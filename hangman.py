@@ -3,6 +3,7 @@ import pygame
 import sys
 import threading
 import time
+import random
 class Rect:
 
     def __init__(self, x: float, y: float, width: int, height: int):
@@ -47,9 +48,13 @@ class Rect:
         return self.__pyg_rect
 
 #word=str(input("What is the word the challenger will have to find?"))
-lives=int(input("How many lives do you want the challenger to have? (int: 1-9)"))
-lives=max(1,min(lives,9))
+lives=9
 word=''
+fileName = 'hangmanWords.txt'
+randomList=[]
+with open(fileName,'r')  as file:
+    for line in file:
+        randomList.append(line)
 
 hangmanList={}
 for i in range(9):
@@ -79,6 +84,7 @@ font = pygame.font.Font('freesansbold.ttf', 14)
 font2 = pygame.font.Font('freesansbold.ttf', 20)
 font3 = pygame.font.Font('freesansbold.ttf', 11)
 startText=font3.render('Enter the word you want the challenger to guess. Then press enter.',True,black,None)
+startText2=font3.render('Type "random" for a random word',True,black,None)
 startWord=font.render(word,True,black,None)
 winText=font2.render('Yay! You Win! Press Any Key To Exit', True, black, None)
 loseText=font2.render('You Lost! Press Any Key To Exit', True, black, None)
@@ -114,6 +120,7 @@ def render():
         guessWord=guessWord+' '+letters
     if start == True:
         screen.blit(startText,(int(screenWidth/2-startText.get_width()/2),int(screenHeight/2-startText.get_height()/2)))
+        screen.blit(startText2,(int(screenWidth/2-startText2.get_width()/2),int(screenHeight/2+(startText.get_height()/2))))
         startWord=font.render(word,True,black,None)
         screen.blit(startWord,(int(screenWidth/2-startWord.get_width()/2),int(screenHeight*7/12)))
     if youWin == True:
@@ -156,6 +163,8 @@ while running:
             word=word.replace(word[0],'',1)
             word=word[::-1]
         if (event.key==pygame.K_RETURN or event.key == pygame.K_KP_ENTER) and start == True:
+            if word=='random':
+                word=random.choice(randomList)
             start=False
             counter=0
             for i in word:
