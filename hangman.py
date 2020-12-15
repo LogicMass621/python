@@ -165,6 +165,14 @@ while running:
         if (event.key==pygame.K_RETURN or event.key == pygame.K_KP_ENTER) and start == True:
             if word=='random':
                 word=random.choice(randomList)
+                wordLetterList=[]
+                for i in word:
+                    wordLetterList.append(i)
+                wordLetterList.pop(-1)
+                word=''
+                for i in wordLetterList:
+                    word=word+i
+                #remove last char. of word here
             start=False
             counter=0
             for i in word:
