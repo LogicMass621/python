@@ -50,11 +50,6 @@ class Rect:
 #word=str(input("What is the word the challenger will have to find?"))
 lives=9
 word=''
-fileName = 'hangmanWords.txt'
-randomList=[]
-with open(fileName,'r')  as file:
-    for line in file:
-        randomList.append(line)
 
 hangmanList={}
 for i in range(9):
@@ -164,6 +159,11 @@ while running:
             word=word[::-1]
         if (event.key==pygame.K_RETURN or event.key == pygame.K_KP_ENTER) and start == True:
             if word=='random':
+                fileName = 'hangmanWords.txt'
+                randomList=[]
+                with open(fileName,'r')  as file:
+                    for line in file:
+                        randomList.append(line)
                 word=random.choice(randomList)
                 wordLetterList=[]
                 for i in word:
