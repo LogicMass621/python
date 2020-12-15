@@ -82,6 +82,7 @@ startText=font3.render('Enter the word you want the challenger to guess. Then pr
 startWord=font.render(word,True,black,None)
 winText=font2.render('Yay! You Win! Press Any Key To Exit', True, black, None)
 loseText=font2.render('You Lost! Press Any Key To Exit', True, black, None)
+livesText=font.render(f'{lives}',True,black,None)
 formatLetters=''
 guessText = font.render(f'{formatLetters}', True, black, None)
 guessWord=''
@@ -131,6 +132,8 @@ def render():
         if alreadyGuessed==True:
             screen.blit(alreadyText,(int(screenWidth/2-alreadyText.get_width()/2),int(screenHeight*3/4-alreadyText.get_height()/4)))
         elif start==False:
+            livesText=font.render(f'Lives: {lives}',True,black,None)
+            screen.blit(livesText,(int(screenWidth*3/4),livesText.get_height()))
             screen.blit(instructionText,(int(screenWidth/2-instructionText.get_width()/2),int(screenHeight*3/4-instructionText.get_height()/4)))
         screen.blit(letterText,(int(screenWidth/2-letterText.get_width()/2),int(screenHeight*1/2)))
         screen.blit(guessText,(int(screenWidth/3),int(screenHeight*7/12)))
