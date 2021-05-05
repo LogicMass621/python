@@ -7,12 +7,11 @@ import math
 import sys
 from utils import get_random_velocity, load_sprite, wrap_position
 from pygame.math import Vector2
-from pygame.transform import rotozoom
-
 #Set up the game window
 pygame.init()
 pygame.mixer.init()
 weapon0Sound=pygame.mixer.Sound('assets/sounds/weapon0Sound.wav')
+weapon0Sound.set_volume(0.0)
 screenWidth, screenHeight = 640, 480
 
 screen = pygame.display.set_mode((screenWidth, screenHeight))
@@ -303,7 +302,7 @@ def asteroidThread():
 
         astLock.release()
 
-        time.sleep(0.06)
+        time.sleep(0.07)
 
 
 ast_thread = threading.Thread(target=asteroidThread)
@@ -315,9 +314,9 @@ def createAsteroids(Number_of_asteroids):
   for i in range(Number_of_asteroids):
 
       #temporary rect to create asteroid, to create asteroid
-      w,h=random.randint(25, 50),random.randint(25,50)
+      w,h=random.randint(35, 50),random.randint(35,50)
       while abs(w-h) > 10:
-          w,h=random.randint(25, 50),random.randint(25,50)
+          w,h=random.randint(35, 50),random.randint(35,50)
 
       astRect = Rect(random.randint(0, screenWidth),
                      random.randint(0, screenHeight), w,
@@ -337,7 +336,7 @@ def createAsteroids(Number_of_asteroids):
       ast=(Asteroid(
               astRect,
               pygame.transform.scale(astImage, (astRect.width+5, astRect.height+5)),
-              xstep, ystep,uniqueId2,(w*h)/30))
+              xstep, ystep,uniqueId2,((w*h)/30+20)))
           
       astLock.acquire()
       astList[uniqueId2]=ast
@@ -353,16 +352,15 @@ def createAsteroid(x,y,w,h,xstep,ystep):
     ast=(Asteroid(
             astRect,
             pygame.transform.scale(astImage, (w+5,h+5)),
-            xstep*2, ystep*2,uniqueId2,(w*h)/30))
+            xstep*2, ystep*2,uniqueId2,((w*h)/30)+20))
     astLock.acquire()
     astList[uniqueId2] = ast
     astLock.release()
 
     uniqueId2+=1
-    asteCreateDone=True
 
 #difficulty
-AstNum=20
+AstNum=10
 createAsteroids(AstNum)
 #=====================================================
 
@@ -473,8 +471,10 @@ def eventLoop():
             is_key_pressed = pygame.key.get_pressed()
 
             if is_key_pressed[pygame.K_RIGHT]:
+              print("right")
               ship.rotate(clockwise=True)
             elif is_key_pressed[pygame.K_LEFT]:
+              print("left")
               ship.rotate(clockwise=False)
     #print(ship.Svel)
     ship.angle=(SVel+5)%360
@@ -523,7 +523,6 @@ def proj_thread():
 
           projExplosions.append(proj)
           ast.health -= proj.damage
-          print(ast.health)
           keysToRmv.append(projKey)
           if ast.health<=0:
             astToRmv.append(astKey)
@@ -531,14 +530,15 @@ def proj_thread():
 
               var5=random.randint(-5,5)
               var6=random.randint(-5,5)
-              width1=ast.rect.width*2//3+var5
-              width2=ast.rect.width*2//3-var5
-              height1=ast.rect.width*2//3+var6
-              height2=ast.rect.width*2//3-var6
-              print(ast.rect.width*ast.rect.height,width1*height1)
+              area=(ast.rect.width*ast.rect.height)/2
+              width1=int(math.sqrt(area)+var5)
+              height1=int(math.sqrt(area)-var5)
+              width2=int(math.sqrt(area)+var6)
+              height2=int(math.sqrt(area)-var6)
+              print((width1*height1+width2*height2)-(ast.rect.width*ast.rect.height))
               popDistance=(ast.rect.width+ast.rect.height)/6
-              astSpeed=3
-              Min,Max=-1,1
+              astSpeed=6
+              Min,Max=0.5,0.9
 
               xstep=round(random.uniform(Min,Max),2)*astSpeed
               ystep=round(random.uniform(Min,Max),2)*astSpeed
@@ -562,10 +562,9 @@ def proj_thread():
 
               x2=ast.rect.x+ast.rect.width/2-width2/2+popDistance*var3
               y2=ast.rect.y+ast.rect.height/2-height2/2+popDistance*var4
+              astCreate.append((x,y,width1,height1,xstep*var1,ystep*var2))
 
-              astCreate.append((x,y,width1,height1,xstep*var1*1.25,ystep*var2*1.25))
-
-              astCreate.append((x2,y2,width2,height2,xstep2*var3*1.25,ystep2*var4*1.25))
+              astCreate.append((x2,y2,width2,height2,xstep2*var3,ystep2*var4))
 
 
       astLock.release()
@@ -577,7 +576,6 @@ def proj_thread():
     projectilesLock.release()
 
     for i in range(len(astCreate)):
-      print(len(astCreate),(astCreate))
       createAsteroid(*astCreate[i])
     astLock.acquire()
 
@@ -587,12 +585,12 @@ def proj_thread():
     if len(astList)<AstNum*4/5:
         print('if')
 
-        w,h=random.randint(40, 75),random.randint(40, 75)
+        w,h=random.randint(35, 50),random.randint(35, 50)
         while abs(w-h) > 22:
           print('while')
-          w,h=random.randint(40, 75),random.randint(40, 75)
+          w,h=random.randint(35, 50),random.randint(35, 50)
         choose=random.randint(0,1)
-        astSpeed=2.5
+        astSpeed=5
         Min,Max=-1,1
 
         if choose == 0:
@@ -638,7 +636,7 @@ def proj_thread():
           createAsteroid(x,y,w,h,xstep,ystep)
 
       
-  time.sleep(0.03)
+  time.sleep(0.06)
 
 
 proj_thread = threading.Thread(target=proj_thread)
