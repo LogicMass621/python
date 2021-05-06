@@ -314,16 +314,16 @@ def createAsteroids(Number_of_asteroids):
   for i in range(Number_of_asteroids):
 
       #temporary rect to create asteroid, to create asteroid
-      w,h=random.randint(35, 50),random.randint(35,50)
+      w,h=random.randint(60, 80),random.randint(60,80)
       while abs(w-h) > 10:
-          w,h=random.randint(35, 50),random.randint(35,50)
+          w,h=random.randint(60, 80),random.randint(60,80)
 
       astRect = Rect(random.randint(0, screenWidth),
                      random.randint(0, screenHeight), w,
                      h)
 
       #just to make sure asteroids move faster
-      astSpeed=3
+      astSpeed=5
       Min,Max=-1,1
       xstep=round(random.uniform(Min,Max),2)*astSpeed
       ystep=round(random.uniform(Min,Max),2)*astSpeed
