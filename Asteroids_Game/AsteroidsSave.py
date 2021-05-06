@@ -426,7 +426,7 @@ def eventLoop():
                   Reload=.25
                   Range=125
                   projectileSize = 3
-                  damage=20
+                  damage=30
                   currTime=time.time()
 
                   if currTime-weaponPrevTimes[currentWeapon]>=Reload:
