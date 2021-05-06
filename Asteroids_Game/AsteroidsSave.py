@@ -337,6 +337,7 @@ def createAsteroids(Number_of_asteroids):
               astRect,
               pygame.transform.scale(astImage, (astRect.width+5, astRect.height+5)),
               xstep, ystep,uniqueId2,((w*h)/30+20)))
+      print(ast.health)
           
       astLock.acquire()
       astList[uniqueId2]=ast
@@ -585,10 +586,10 @@ def proj_thread():
     if len(astList)<AstNum*4/5:
         print('if')
 
-        w,h=random.randint(35, 50),random.randint(35, 50)
+        w,h=random.randint(60, 80),random.randint(60, 80)
         while abs(w-h) > 22:
           print('while')
-          w,h=random.randint(35, 50),random.randint(35, 50)
+          w,h=random.randint(60, 80),random.randint(60, 80)
         choose=random.randint(0,1)
         astSpeed=5
         Min,Max=-1,1
