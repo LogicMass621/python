@@ -7,6 +7,10 @@ import math
 import sys
 from utils import get_random_velocity, load_sprite, wrap_position
 from pygame.math import Vector2
+
+#changes name of terminal window
+sys.stdout.write("\x1b]2;Asteroids!\x07")
+
 #Set up the game window
 pygame.init()
 pygame.mixer.init()
@@ -314,7 +318,7 @@ def asteroidThread():
 
         astLock.release()
 
-        time.sleep(0.06)
+        time.sleep(0.07)
 
 
 ast_thread = threading.Thread(target=asteroidThread)
@@ -345,9 +349,11 @@ def createAsteroids(Number_of_asteroids):
 
 
       #adding asteroid object to list
+      image=pygame.transform.scale(astImage, (astRect.width+5, astRect.height+5))
+      image=pygame.transform.flip(image,random.choice([True,False]),random.choice([True,False]))
       ast=(Asteroid(
               astRect,
-              pygame.transform.scale(astImage, (astRect.width+5, astRect.height+5)),
+              image,
               xstep, ystep,uniqueId2,((w*h)/30+20),1))
       print(ast.health,ast.stage)
           
@@ -362,9 +368,11 @@ def createAsteroid(x,y,w,h,xstep,ystep,astStage):
     astRect = Rect(x,y,w,h)
 
     #adding asteroid object to list
+    image=pygame.transform.scale(astImage, (astRect.width+5, astRect.height+5))
+    image=pygame.transform.flip(image,random.choice([True,False]),random.choice([True,False]))
     ast=Asteroid(
             astRect,
-            pygame.transform.scale(astImage, (w+5,h+5)),
+            image,
             xstep*2, ystep*2,uniqueId2,((w*h)/30)+20,astStage)
     astLock.acquire()
     astList[uniqueId2] = ast
@@ -656,7 +664,7 @@ def proj_thread():
           createAsteroid(x,y,w,h,xstep,ystep)
 
       
-  time.sleep(0.06)
+  time.sleep(0.08)
 
 
 proj_thread = threading.Thread(target=proj_thread)
