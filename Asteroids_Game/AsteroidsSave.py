@@ -10,11 +10,15 @@ from pygame.math import Vector2
 #Set up the game window
 pygame.init()
 pygame.mixer.init()
+pygame.font.init()
+font = pygame.font.Font('freesansbold.ttf', 15)
 weapon0Sound=pygame.mixer.Sound('assets/sounds/weapon0Sound.wav')
 weapon0Sound.set_volume(0.0)
 screenWidth, screenHeight = 640, 480
 
 screen = pygame.display.set_mode((screenWidth, screenHeight))
+pygame.display.set_caption('Asteroids!')
+
 #Control
 projectiles = {}
 projectilesLock = threading.Lock()
@@ -102,13 +106,14 @@ class Rect:
 
 
 class Asteroid:
-    def __init__(self, rect, image, xstep, ystep,uniqueId2,health):
+    def __init__(self, rect, image, xstep, ystep,uniqueId2,health,stage):
         self.__rect = rect
         self.__image = image
         self.__xstep = xstep
         self.__ystep = ystep
         self.__uniqueId2 = uniqueId2
         self.__health=health
+        self.__stage=stage
 
     def __str__(self):
         return 'rect: {} xstep: {} ystep{}'.format(self.__rect, self.__xstep,
@@ -148,6 +153,13 @@ class Asteroid:
     @health.setter
     def health(self, health):
         self.__health = health
+    @property
+    def stage(self):
+        return self.__stage
+
+    @stage.setter
+    def stage(self, stage):
+        self.__stage = stage
 
 class Projectile:
   def __init__(self, rect, xstep, ystep, Id,Type,Range,shotCoordx, shotCoordy,damage,explCounter,explX,explY,reloadTime):
@@ -302,7 +314,7 @@ def asteroidThread():
 
         astLock.release()
 
-        time.sleep(0.07)
+        time.sleep(0.06)
 
 
 ast_thread = threading.Thread(target=asteroidThread)
@@ -336,24 +348,24 @@ def createAsteroids(Number_of_asteroids):
       ast=(Asteroid(
               astRect,
               pygame.transform.scale(astImage, (astRect.width+5, astRect.height+5)),
-              xstep, ystep,uniqueId2,((w*h)/30+20)))
-      print(ast.health)
+              xstep, ystep,uniqueId2,((w*h)/30+20),1))
+      print(ast.health,ast.stage)
           
       astLock.acquire()
       astList[uniqueId2]=ast
       astLock.release()
       uniqueId2+=1
 
-def createAsteroid(x,y,w,h,xstep,ystep):
+def createAsteroid(x,y,w,h,xstep,ystep,astStage):
     global uniqueId2
 
     astRect = Rect(x,y,w,h)
 
     #adding asteroid object to list
-    ast=(Asteroid(
+    ast=Asteroid(
             astRect,
             pygame.transform.scale(astImage, (w+5,h+5)),
-            xstep*2, ystep*2,uniqueId2,((w*h)/30)+20))
+            xstep*2, ystep*2,uniqueId2,((w*h)/30)+20,astStage)
     astLock.acquire()
     astList[uniqueId2] = ast
     astLock.release()
@@ -415,7 +427,7 @@ def eventLoop():
     BVel=0
     FVel=0
     global projectiles, currentWeapon, uniqueId, weaponPrevTimes, Svel, Bvel, Fvel
-    pygame.key.set_repeat(75, 50)
+    pygame.key.set_repeat(50,50)
     while running:
         pygame.display.init()
         event = pygame.event.poll()
@@ -493,9 +505,13 @@ def dist_to(x1,y1,width1,height1,rect):
 event_thread = threading.Thread(target=eventLoop)
 event_thread.start()
 projExplosions=[]
+points=0
+white=(255,255,255)
+textPoints = font.render(f'Points: {points}', True, white, None)
+
 
 def proj_thread():
-  global projectiles,running,asteroids,projExplosions,AstNum
+  global projectiles,running,asteroids,projExplosions,AstNum,points,textPoints
   while running:
 
     keysToRmv=[]
@@ -526,6 +542,9 @@ def proj_thread():
           ast.health -= proj.damage
           keysToRmv.append(projKey)
           if ast.health<=0:
+            stage=ast.stage
+            points+=(stage*50)
+            textPoints = font.render(f'Points: {points}', True, white, None)
             astToRmv.append(astKey)
             if ast.rect.width>=20 and ast.rect.height>=20:
 
@@ -536,7 +555,6 @@ def proj_thread():
               height1=int(math.sqrt(area)-var5)
               width2=int(math.sqrt(area)+var6)
               height2=int(math.sqrt(area)-var6)
-              print((width1*height1+width2*height2)-(ast.rect.width*ast.rect.height))
               popDistance=(ast.rect.width+ast.rect.height)/6
               astSpeed=6
               Min,Max=0.5,0.9
@@ -563,9 +581,10 @@ def proj_thread():
 
               x2=ast.rect.x+ast.rect.width/2-width2/2+popDistance*var3
               y2=ast.rect.y+ast.rect.height/2-height2/2+popDistance*var4
-              astCreate.append((x,y,width1,height1,xstep*var1,ystep*var2))
 
-              astCreate.append((x2,y2,width2,height2,xstep2*var3,ystep2*var4))
+              astCreate.append((x,y,width1,height1,xstep*var1,ystep*var2,(stage+1)))
+
+              astCreate.append((x2,y2,width2,height2,xstep2*var3,ystep2*var4,(stage+1)))
 
 
       astLock.release()
@@ -653,6 +672,8 @@ def render():
   global projectiles,projExplosions
   screen.fill(0)
 
+  screen.blit(textPoints,(0,0))
+
   #asteroids
   for key,ast in astList.items():
       screen.blit(ast.image, ast.rect.toPygame())
@@ -675,6 +696,7 @@ def render():
   #ship
   roundedAngle=((5 * round(ship.angle/5))%360)
   screen.blit(ships[roundedAngle], shipCoords[roundedAngle])
+
   pygame.display.flip()
 
 
