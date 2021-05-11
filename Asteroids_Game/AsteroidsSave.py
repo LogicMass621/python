@@ -23,6 +23,37 @@ screenWidth, screenHeight = 640, 480
 screen = pygame.display.set_mode((screenWidth, screenHeight))
 pygame.display.set_caption('Asteroids!')
 
+highScoreDict={}
+
+#creates flie if not there
+with open('AsteroidsHighScores.txt','a')  as file:
+  print(file)
+
+#ALWAYS HAS TO BE EMPTY LINE AT END OF FILE
+
+with open('AsteroidsHighScores.txt','r')  as file:
+  for line in file:
+    x=line.split(':')
+    x[1]=x[1][0:len(x[1])-1]
+    #[0:len(x[1])-1] removes the unkown symbol at the end of word,
+    #even though it doesn't physically remove characters,
+    #it just goes thorugh every single character in the string
+    if x[0] in highScoreDict.keys():
+      highScoreDict[x[0]].append(x[1])
+
+    else:
+      highScoreDict[x[0]]=[x[1]]
+    #need to make sure same name can appear multiple times
+print(highScoreDict)
+
+highScore=['name',0]
+for name,scoreLists in highScoreDict.items():
+  for score in scoreLists:
+    if int(score) > highScore[1]:
+       highScore[0]=name
+       highScore[1]=int(score)
+print(highScore)
+
 #Control
 projectiles = {}
 projectilesLock = threading.Lock()
@@ -293,15 +324,26 @@ astImage = pygame.image.load('assets/images/asteroid.png')
 uniqueId2=0
 astLock=threading.Lock()
 
+astTimer=time.time()
+astPrevTimes={}
+for i in range(15):
+  astPrevTimes[i]=time.time()
+
 def asteroidThread():
-    global running,projectiles
+    global running,projectiles, astTimer,astPrevTimes
     while running:
+
         keysToRmv=[]
         astLock.acquire()
         for astKey,ast in astList.items():
 
-            ast.rect.x += ast.xstep
-            ast.rect.y += ast.ystep
+            astTimer=time.time()
+            astDeltaTime=astTimer-astPrevTimes[astKey]
+
+            ast.rect.x += ast.xstep*astDeltaTime*10
+            ast.rect.y += ast.ystep*astDeltaTime*10
+
+            astPrevTimes[astKey]=time.time()
 
             #check for boundaries and come in from other side
             if ast.rect.x > screenWidth:
@@ -363,7 +405,7 @@ def createAsteroids(Number_of_asteroids):
       uniqueId2+=1
 
 def createAsteroid(x,y,w,h,xstep,ystep,astStage):
-    global uniqueId2
+    global uniqueId2,astPrevTimes
 
     astRect = Rect(x,y,w,h)
 
@@ -374,6 +416,7 @@ def createAsteroid(x,y,w,h,xstep,ystep,astStage):
             astRect,
             image,
             xstep*2, ystep*2,uniqueId2,((w*h)/30)+20,astStage)
+    astPrevTimes[uniqueId2]=time.time()
     astLock.acquire()
     astList[uniqueId2] = ast
     astLock.release()
@@ -517,9 +560,33 @@ points=0
 white=(255,255,255)
 textPoints = font.render(f'Points: {points}', True, white, None)
 
+#doens't work don't know why :(
+def writeScore():
+  global running
+  loop=False
+  for name,scores in highScoreDict.items():
+      for score in scores:
+        if loop==False: 
+          if points<int(score):
+            print('loop')
+            with open('AsteroidsHighScores.txt','w')  as file:
+              print('open')
+              for line in file:
+                print(line)
+                x=line.split(':')
+                print(x[0],x[1])
+                playerName='test'
+                if x[0]==name and x[1]==score:
+                  print(line)
+                  line.replace(line,f'{playerName}:{points}')
+                  highScoreDict[x[0]]=playerName
+                  highScoreDict[playerName]=points
+                  print(line)
+                  file.close()
+            loop=True
 
 def proj_thread():
-  global projectiles,running,asteroids,projExplosions,AstNum,points,textPoints
+  global projectiles,running,asteroids,projExplosions,AstNum,points,textPoints,astPrevTimes
   while running:
 
     keysToRmv=[]
@@ -552,6 +619,8 @@ def proj_thread():
           if ast.health<=0:
             stage=ast.stage
             points+=(stage*50)
+            #if points == 100:
+              #writeScore()
             textPoints = font.render(f'Points: {points}', True, white, None)
             astToRmv.append(astKey)
             if ast.rect.width>=20 and ast.rect.height>=20:
