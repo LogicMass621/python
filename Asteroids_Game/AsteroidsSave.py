@@ -17,7 +17,7 @@ pygame.mixer.init()
 pygame.font.init()
 font = pygame.font.Font('freesansbold.ttf', 15)
 weapon0Sound=pygame.mixer.Sound('assets/sounds/weapon0Sound.wav')
-weapon0Sound.set_volume(0.0)
+weapon0Sound.set_volume(0.1)
 screenWidth, screenHeight = 640, 480
 
 screen = pygame.display.set_mode((screenWidth, screenHeight))
@@ -323,22 +323,23 @@ astList = {}
 astImage = pygame.image.load('assets/images/asteroid.png')
 uniqueId2=0
 astLock=threading.Lock()
+AstNum=10
 
 astTimer=time.time()
 astPrevTimes={}
-for i in range(15):
+for i in range(AstNum):
   astPrevTimes[i]=time.time()
 homeScreen=True
 def asteroidThread():
     global running,projectiles, astTimer,astPrevTimes
     while running:
-      while homeScreen==False:
+      if homeScreen==False:
 
         keysToRmv=[]
         astLock.acquire()
         for astKey,ast in astList.items():
-
             astTimer=time.time()
+            print(astPrevTimes,astList)
             astDeltaTime=astTimer-astPrevTimes[astKey]
 
             ast.rect.x += ast.xstep*astDeltaTime*10
@@ -425,9 +426,36 @@ def createAsteroid(x,y,w,h,xstep,ystep,astStage):
     uniqueId2+=1
 
 #difficulty
-AstNum=10
 createAsteroids(AstNum)
 #=====================================================
+
+def home_screen():
+  global homeScreen, astList, projectiles,points,astPrevTimes,uniqueId,uniqueId2,points
+  astLock.acquire()
+  projectilesLock.acquire()
+  uniqueId2=0
+  uniqueId=0
+  for i in range(AstNum):
+    astPrevTimes[i]=time.time()
+  homeScreen=True
+  astList={}
+  projectiles={}
+  shipX = (screenWidth / 2) - (shipWidth / 2)
+  shipY = (screenHeight / 2) - (shipHeight / 2)
+  shipRect = Rect(shipX, shipY, shipWidth, shipHeight)
+  ship = Ship(0)
+  ship.rect=shipRect
+  ship.angle=0
+  ship.health=1000
+  SVel=0
+  BVel=0
+  FVel=0
+  points=0
+  currentWeapon = 0
+  astLock.release()
+  projectilesLock.release()
+  createAsteroids(AstNum)
+
 
 #Images
 def rot_center(image, angle):
@@ -484,12 +512,16 @@ def eventLoop():
     while running:
       if homeScreen==True:
         event = pygame.event.poll()
+        if event.type == pygame.QUIT:
+          running=False
         if event.type==pygame.MOUSEBUTTONDOWN and event.button==1:
           mouseRect=Rect(pygame.mouse.get_pos()[0],pygame.mouse.get_pos()[1],1,1)
           if mouseRect.colliderect(buttonRect,0,0):
             homeScreen=False
       if homeScreen==False:
           event = pygame.event.poll()
+          if event.type == pygame.QUIT:
+            running=False
           if event.type == pygame.KEYDOWN:
               if event.key == pygame.K_ESCAPE:
                 running=False
@@ -631,11 +663,19 @@ def proj_thread():
             if ast.health<=0:
               stage=ast.stage
               points+=(stage*50)
-              #if points == 100:
-                #homeScreen=True
               textPoints = font.render(f'Points: {points}', True, white, None)
               astToRmv.append(astKey)
-              if ast.rect.width>=20 and ast.rect.height>=20:
+
+              if points >= 50:
+                astLock.release()
+                projectilesLock.release()
+                print('U WIN!!!! JK JUST FOR TESTING LOL')
+                keysToRmv=[]
+                astToRmv=[]
+                home_screen()
+                astLock.acquire()
+                projectilesLock.acquire()                
+              if ast.rect.width>=20 and ast.rect.height>=20 and homeScreen == False:
 
                 var5=random.randint(-5,5)
                 var6=random.randint(-5,5)
@@ -687,12 +727,11 @@ def proj_thread():
       for i in range(len(astCreate)):
         createAsteroid(*astCreate[i])
       astLock.acquire()
-
       for key in astToRmv:
         astList.pop(key)
       astLock.release()
-      if len(astList)<AstNum*4/5:
-          print('if')
+      if len(astList)<AstNum*4/5 and homeScreen == False:
+          print('if',homeScreen)
 
           w,h=random.randint(60, 80),random.randint(60, 80)
           while abs(w-h) > 22:
@@ -745,7 +784,7 @@ def proj_thread():
             createAsteroid(x,y,w,h,xstep,ystep)
 
         
-      time.sleep(0.08)
+      time.sleep(0.06)
 
 
 proj_thread = threading.Thread(target=proj_thread)
@@ -791,7 +830,6 @@ def render():
     #ship
     roundedAngle=((5 * round(ship.angle/5))%360)
     screen.blit(ships[roundedAngle], shipCoords[roundedAngle])
-    print(roundedAngle,ship.angle)
 
   pygame.display.flip()
 
