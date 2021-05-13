@@ -328,10 +328,11 @@ astTimer=time.time()
 astPrevTimes={}
 for i in range(15):
   astPrevTimes[i]=time.time()
-
+homeScreen=True
 def asteroidThread():
     global running,projectiles, astTimer,astPrevTimes
     while running:
+      while homeScreen==False:
 
         keysToRmv=[]
         astLock.acquire()
@@ -360,7 +361,7 @@ def asteroidThread():
 
         astLock.release()
 
-        time.sleep(0.07)
+        time.sleep(0.08)
 
 
 ast_thread = threading.Thread(target=asteroidThread)
@@ -477,72 +478,82 @@ def eventLoop():
     SVel=0
     BVel=0
     FVel=0
-    global projectiles, currentWeapon, uniqueId, weaponPrevTimes, Svel, Bvel, Fvel
+    global projectiles, currentWeapon, uniqueId, weaponPrevTimes, Svel, Bvel, Fvel,homeScreen,running
     pygame.key.set_repeat(50,50)
+    pygame.display.init()
     while running:
-        pygame.display.init()
+      if homeScreen==True:
         event = pygame.event.poll()
-        if event.type == pygame.KEYDOWN:
-            #Shoot (Code Collapsed)
-            if event.key == pygame.K_SPACE:
+        if event.type==pygame.MOUSEBUTTONDOWN and event.button==1:
+          mouseRect=Rect(pygame.mouse.get_pos()[0],pygame.mouse.get_pos()[1],1,1)
+          if mouseRect.colliderect(buttonRect,0,0):
+            homeScreen=False
+      if homeScreen==False:
+          event = pygame.event.poll()
+          if event.type == pygame.KEYDOWN:
+              if event.key == pygame.K_ESCAPE:
+                running=False
 
-                if currentWeapon == 0:
-                  Reload=.25
-                  Range=125
-                  projectileSize = 3
-                  damage=30
-                  currTime=time.time()
+              #Shoot (Code Collapsed)
+              if event.key == pygame.K_SPACE:
 
-                  if currTime-weaponPrevTimes[currentWeapon]>=Reload:
+                  if currentWeapon == 0:
+                    Reload=.25
+                    Range=125
+                    projectileSize = 3
+                    damage=30
+                    currTime=time.time()
 
-                    weapon0Sound.stop()
-                    weapon0Sound.play()
-                    roundedAngle=((5 * round(ship.angle/5))%360)
-                    x = shipCoords[roundedAngle][0]
-                    y = shipCoords[roundedAngle][1]
-                    projectileRect = Rect(x+ships[roundedAngle].get_rect().width/2,
-                      y+ships[roundedAngle].get_rect().height/2,
-                       projectileSize, projectileSize)
-                    radians = math.radians(ship.angle)
-                    projectileSpeed = 0.0015
-                    projectileType = 0
-                    uniqueId += 1
-                    proj=Projectile(
-                        projectileRect, 0,
-                        0, 0,
-                        uniqueId,0,0,0,0,0,0,0,0)
+                    if currTime-weaponPrevTimes[currentWeapon]>=Reload:
 
-                    #have to like redefine attributes for some reason
-                    minSpray,maxSpray=(-.3,.3)
-                    proj.rect=projectileRect
-                    proj.xstep=projectileSpeed * math.sin(radians+random.uniform(minSpray,maxSpray))
-                    proj.ystep=-projectileSpeed * math.cos(radians+random.uniform(minSpray,maxSpray))
-                    proj.Type=0
-                    proj.explCounter=0
-                    proj.Range=Range
-                    proj.shotCoordx=proj.rect.x
-                    proj.shotCoordy=proj.rect.y
-                    proj.damage=damage
-                    proj.explX=0
-                    proj.explY=0
-                    proj.reloadTime=time.time()
-                    projectilesLock.acquire()
-                    projectiles[uniqueId]=proj
-                    projectilesLock.release()
-                    weaponPrevTimes[currentWeapon]=time.time()
+                      weapon0Sound.stop()
+                      weapon0Sound.play()
+                      roundedAngle=((5 * round(ship.angle/5))%360)
+                      x = shipCoords[roundedAngle][0]
+                      y = shipCoords[roundedAngle][1]
+                      projectileRect = Rect(x+ships[roundedAngle].get_rect().width/2,
+                        y+ships[roundedAngle].get_rect().height/2,
+                         projectileSize, projectileSize)
+                      radians = math.radians(ship.angle)
+                      projectileSpeed = 0.0015
+                      projectileType = 0
+                      uniqueId += 1
+                      proj=Projectile(
+                          projectileRect, 0,
+                          0, 0,
+                          uniqueId,0,0,0,0,0,0,0,0)
 
-            #Forward
-            is_key_pressed = pygame.key.get_pressed()
+                      #have to like redefine attributes for some reason
+                      minSpray,maxSpray=(-.3,.3)
+                      proj.rect=projectileRect
+                      proj.xstep=projectileSpeed * math.sin(radians+random.uniform(minSpray,maxSpray))
+                      proj.ystep=-projectileSpeed * math.cos(radians+random.uniform(minSpray,maxSpray))
+                      proj.Type=0
+                      proj.explCounter=0
+                      proj.Range=Range
+                      proj.shotCoordx=proj.rect.x
+                      proj.shotCoordy=proj.rect.y
+                      proj.damage=damage
+                      proj.explX=0
+                      proj.explY=0
+                      proj.reloadTime=time.time()
+                      projectilesLock.acquire()
+                      projectiles[uniqueId]=proj
+                      projectilesLock.release()
+                      weaponPrevTimes[currentWeapon]=time.time()
 
-            if is_key_pressed[pygame.K_RIGHT]:
-              print("right")
-              ship.rotate(clockwise=True)
-            elif is_key_pressed[pygame.K_LEFT]:
-              print("left")
-              ship.rotate(clockwise=False)
-    #print(ship.Svel)
-    ship.angle=(SVel+5)%360
-    ship.angle = (ship.angle / 2)
+              #Forward
+              is_key_pressed = pygame.key.get_pressed()
+
+              if is_key_pressed[pygame.K_RIGHT]:
+                print("right")
+                ship.rotate(clockwise=True)
+              elif is_key_pressed[pygame.K_LEFT]:
+                print("left")
+                ship.rotate(clockwise=False)
+      #print(ship.Svel)
+      ship.angle=(SVel+5)%360
+      ship.angle = (ship.angle / 2)
     time.sleep(0.08)
 
 #can't just pass rect becuase ship might move, and range calculations would be off
@@ -586,154 +597,155 @@ def writeScore():
             loop=True
 
 def proj_thread():
-  global projectiles,running,asteroids,projExplosions,AstNum,points,textPoints,astPrevTimes
+  global projectiles,running,asteroids,projExplosions,AstNum,points,textPoints,astPrevTimes,homeScreen
   while running:
+    while homeScreen==False:
 
-    keysToRmv=[]
-    astToRmv=[]
-    astCreate=[]
+      keysToRmv=[]
+      astToRmv=[]
+      astCreate=[]
 
-    projectilesLock.acquire()
-    for projKey, proj in projectiles.items():
-      if proj.Type==0:
-        currTime=time.time()
-        timePast=(currTime-proj.reloadTime)*100000
-        if timePast>20:
-          proj.rect.x += timePast*proj.xstep
-          proj.rect.y += timePast*proj.ystep
-          proj.reloadTime=time.time()
-
-      if dist_to(proj.shotCoordx,proj.shotCoordy,proj.rect.width,proj.rect.height,proj.rect)>=proj.Range:
-        keysToRmv.append(projKey)
-      astLock.acquire()
-      for astKey,ast in astList.items():
-        if ast.rect.colliderect(proj.rect,(ast.image.get_rect().width-ast.rect.width),(ast.image.get_rect().height-ast.rect.height)):
+      projectilesLock.acquire()
+      for projKey, proj in projectiles.items():
+        if proj.Type==0:
           currTime=time.time()
-          if proj.Type==0:
-            proj.explX=proj.rect.x-10
-            proj.explY=proj.rect.y-10  # 10 is half width of explosion, no variable, only used here
+          timePast=(currTime-proj.reloadTime)*100000
+          if timePast>20:
+            proj.rect.x += timePast*proj.xstep
+            proj.rect.y += timePast*proj.ystep
+            proj.reloadTime=time.time()
 
-          projExplosions.append(proj)
-          ast.health -= proj.damage
+        if dist_to(proj.shotCoordx,proj.shotCoordy,proj.rect.width,proj.rect.height,proj.rect)>=proj.Range:
           keysToRmv.append(projKey)
-          if ast.health<=0:
-            stage=ast.stage
-            points+=(stage*50)
-            #if points == 100:
-              #writeScore()
-            textPoints = font.render(f'Points: {points}', True, white, None)
-            astToRmv.append(astKey)
-            if ast.rect.width>=20 and ast.rect.height>=20:
+        astLock.acquire()
+        for astKey,ast in astList.items():
+          if ast.rect.colliderect(proj.rect,(ast.image.get_rect().width-ast.rect.width),(ast.image.get_rect().height-ast.rect.height)):
+            currTime=time.time()
+            if proj.Type==0:
+              proj.explX=proj.rect.x-10
+              proj.explY=proj.rect.y-10  # 10 is half width of explosion, no variable, only used here
 
-              var5=random.randint(-5,5)
-              var6=random.randint(-5,5)
-              area=(ast.rect.width*ast.rect.height)/2
-              width1=int(math.sqrt(area)+var5)
-              height1=int(math.sqrt(area)-var5)
-              width2=int(math.sqrt(area)+var6)
-              height2=int(math.sqrt(area)-var6)
-              popDistance=(ast.rect.width+ast.rect.height)/6
-              astSpeed=6
-              Min,Max=0.5,0.9
+            projExplosions.append(proj)
+            ast.health -= proj.damage
+            keysToRmv.append(projKey)
+            if ast.health<=0:
+              stage=ast.stage
+              points+=(stage*50)
+              #if points == 100:
+                #homeScreen=True
+              textPoints = font.render(f'Points: {points}', True, white, None)
+              astToRmv.append(astKey)
+              if ast.rect.width>=20 and ast.rect.height>=20:
 
-              xstep=round(random.uniform(Min,Max),2)*astSpeed
-              ystep=round(random.uniform(Min,Max),2)*astSpeed
-              while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
+                var5=random.randint(-5,5)
+                var6=random.randint(-5,5)
+                area=(ast.rect.width*ast.rect.height)/2
+                width1=int(math.sqrt(area)+var5)
+                height1=int(math.sqrt(area)-var5)
+                width2=int(math.sqrt(area)+var6)
+                height2=int(math.sqrt(area)-var6)
+                popDistance=(ast.rect.width+ast.rect.height)/6
+                astSpeed=6
+                Min,Max=0.5,0.9
+
                 xstep=round(random.uniform(Min,Max),2)*astSpeed
                 ystep=round(random.uniform(Min,Max),2)*astSpeed
+                while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
+                  xstep=round(random.uniform(Min,Max),2)*astSpeed
+                  ystep=round(random.uniform(Min,Max),2)*astSpeed
 
-              xstep2=round(random.uniform(Min,Max),2)*astSpeed
-              ystep2=round(random.uniform(Min,Max),2)*astSpeed
-              while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
                 xstep2=round(random.uniform(Min,Max),2)*astSpeed
                 ystep2=round(random.uniform(Min,Max),2)*astSpeed
+                while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
+                  xstep2=round(random.uniform(Min,Max),2)*astSpeed
+                  ystep2=round(random.uniform(Min,Max),2)*astSpeed
 
-              var1=random.choice([1,-1])
-              var2=random.choice([1,-1])
-              var3=random.choice([1,-1])
-              var4=random.choice([1,-1])
+                var1=random.choice([1,-1])
+                var2=random.choice([1,-1])
+                var3=random.choice([1,-1])
+                var4=random.choice([1,-1])
 
-              x=ast.rect.x+ast.rect.width/2-width1/2+popDistance*var1
-              y=ast.rect.y+ast.rect.height/2-height1/2+popDistance*var2
+                x=ast.rect.x+ast.rect.width/2-width1/2+popDistance*var1
+                y=ast.rect.y+ast.rect.height/2-height1/2+popDistance*var2
 
-              x2=ast.rect.x+ast.rect.width/2-width2/2+popDistance*var3
-              y2=ast.rect.y+ast.rect.height/2-height2/2+popDistance*var4
+                x2=ast.rect.x+ast.rect.width/2-width2/2+popDistance*var3
+                y2=ast.rect.y+ast.rect.height/2-height2/2+popDistance*var4
 
-              astCreate.append((x,y,width1,height1,xstep*var1,ystep*var2,(stage+1)))
+                astCreate.append((x,y,width1,height1,xstep*var1,ystep*var2,(stage+1)))
 
-              astCreate.append((x2,y2,width2,height2,xstep2*var3,ystep2*var4,(stage+1)))
+                astCreate.append((x2,y2,width2,height2,xstep2*var3,ystep2*var4,(stage+1)))
 
 
+        astLock.release()
+
+
+      for key in keysToRmv:
+        if key in projectiles:
+          projectiles.pop(key)
+      projectilesLock.release()
+
+      for i in range(len(astCreate)):
+        createAsteroid(*astCreate[i])
+      astLock.acquire()
+
+      for key in astToRmv:
+        astList.pop(key)
       astLock.release()
+      if len(astList)<AstNum*4/5:
+          print('if')
 
-
-    for key in keysToRmv:
-      if key in projectiles:
-        projectiles.pop(key)
-    projectilesLock.release()
-
-    for i in range(len(astCreate)):
-      createAsteroid(*astCreate[i])
-    astLock.acquire()
-
-    for key in astToRmv:
-      astList.pop(key)
-    astLock.release()
-    if len(astList)<AstNum*4/5:
-        print('if')
-
-        w,h=random.randint(60, 80),random.randint(60, 80)
-        while abs(w-h) > 22:
-          print('while')
           w,h=random.randint(60, 80),random.randint(60, 80)
-        choose=random.randint(0,1)
-        astSpeed=5
-        Min,Max=-1,1
+          while abs(w-h) > 22:
+            print('while')
+            w,h=random.randint(60, 80),random.randint(60, 80)
+          choose=random.randint(0,1)
+          astSpeed=5
+          Min,Max=-1,1
 
-        if choose == 0:
-          print('x')
-          xpos=random.randint(0,1)
-          if xpos==0:
-            print('x:0')
-            x=0-w
-            xstep=round(random.uniform(0,1),2)*astSpeed
-            ystep=round(random.uniform(Min,Max),2)*astSpeed
-            while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
+          if choose == 0:
+            print('x')
+            xpos=random.randint(0,1)
+            if xpos==0:
+              print('x:0')
+              x=0-w
               xstep=round(random.uniform(0,1),2)*astSpeed
               ystep=round(random.uniform(Min,Max),2)*astSpeed
-          if xpos==1:
-            print('x:1')
-            x=screenWidth
-            xstep=round(random.uniform(-1,0),2)*astSpeed
-            ystep=round(random.uniform(Min,Max),2)*astSpeed
-            while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
+              while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
+                xstep=round(random.uniform(0,1),2)*astSpeed
+                ystep=round(random.uniform(Min,Max),2)*astSpeed
+            if xpos==1:
+              print('x:1')
+              x=screenWidth
               xstep=round(random.uniform(-1,0),2)*astSpeed
               ystep=round(random.uniform(Min,Max),2)*astSpeed
-          y=random.randint(0,screenHeight)
-        if choose == 1:
-          print('y')
-          ypos=random.randint(0,1)
-          if ypos==0:
-            print('y:0')
-            y=0-h
-            ystep=round(random.uniform(0,1),2)*astSpeed
-            xstep=round(random.uniform(Min,Max),2)*astSpeed
-            while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
+              while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
+                xstep=round(random.uniform(-1,0),2)*astSpeed
+                ystep=round(random.uniform(Min,Max),2)*astSpeed
+            y=random.randint(0,screenHeight)
+          if choose == 1:
+            print('y')
+            ypos=random.randint(0,1)
+            if ypos==0:
+              print('y:0')
+              y=0-h
               ystep=round(random.uniform(0,1),2)*astSpeed
               xstep=round(random.uniform(Min,Max),2)*astSpeed
-          if ypos==1:
-            print('y:1')
-            y=screenHeight
-            ystep=round(random.uniform(-1,0),2)*astSpeed
-            xstep=round(random.uniform(Min,Max),2)*astSpeed
-            while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
+              while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
+                ystep=round(random.uniform(0,1),2)*astSpeed
+                xstep=round(random.uniform(Min,Max),2)*astSpeed
+            if ypos==1:
+              print('y:1')
+              y=screenHeight
               ystep=round(random.uniform(-1,0),2)*astSpeed
               xstep=round(random.uniform(Min,Max),2)*astSpeed
-          x=random.randint(0,screenHeight)
-          createAsteroid(x,y,w,h,xstep,ystep)
+              while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
+                ystep=round(random.uniform(-1,0),2)*astSpeed
+                xstep=round(random.uniform(Min,Max),2)*astSpeed
+            x=random.randint(0,screenHeight)
+            createAsteroid(x,y,w,h,xstep,ystep)
 
-      
-  time.sleep(0.08)
+        
+      time.sleep(0.08)
 
 
 proj_thread = threading.Thread(target=proj_thread)
@@ -743,36 +755,43 @@ proj_thread.start()
 
 
 w0color= (175, 155, 96)
+black=(0,0,0)
+white=(255,255,255)
+playButton=font.render('PLAY',True,white,None)
+buttonRect=Rect(screenWidth/2-playButton.get_width()/2, screenHeight/2-playButton.get_height()/2,playButton.get_width(),playButton.get_height())
 
 #Updating
 def render():
   global projectiles,projExplosions
   screen.fill(0)
+  if homeScreen==True:
+    screen.blit(playButton,(buttonRect.x,buttonRect.y))
+  if homeScreen==False:
 
-  screen.blit(textPoints,(0,0))
+    screen.blit(textPoints,(0,0))
+    #asteroids
+    for key,ast in astList.items():
+        screen.blit(ast.image, ast.rect.toPygame())
 
-  #asteroids
-  for key,ast in astList.items():
-      screen.blit(ast.image, ast.rect.toPygame())
+    #projectiles
+    projectilesLock.acquire()
+    for key, proj in projectiles.items():
+      if proj.Type==0:
+        pygame.draw.rect(screen, w0color, proj.rect.toPygame())
+    projectilesLock.release()
 
-  #projectiles
-  projectilesLock.acquire()
-  for key, proj in projectiles.items():
-    if proj.Type==0:
-      pygame.draw.rect(screen, w0color, proj.rect.toPygame())
-  projectilesLock.release()
+    #explosions
+    for proj in projExplosions:
+      if proj.Type==0:
+        screen.blit(w0explosion, (proj.explX,proj.explY))
+        proj.explCounter+=1
+        if proj.explCounter==4:
+          projExplosions.remove(proj)
 
-  #explosions
-  for proj in projExplosions:
-    if proj.Type==0:
-      screen.blit(w0explosion, (proj.explX,proj.explY))
-      proj.explCounter+=1
-      if proj.explCounter==4:
-        projExplosions.remove(proj)
-
-  #ship
-  roundedAngle=((5 * round(ship.angle/5))%360)
-  screen.blit(ships[roundedAngle], shipCoords[roundedAngle])
+    #ship
+    roundedAngle=((5 * round(ship.angle/5))%360)
+    screen.blit(ships[roundedAngle], shipCoords[roundedAngle])
+    print(roundedAngle,ship.angle)
 
   pygame.display.flip()
 
@@ -781,4 +800,5 @@ while running:
     render()
     clock.tick(60)
 pygame.quit()
+sys.exit()
 exit(0)
