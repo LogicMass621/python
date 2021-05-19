@@ -382,7 +382,7 @@ astList = {}
 astImage = pygame.image.load('assets/images/asteroid.png')
 uniqueId2=0
 astLock=threading.Lock()
-AstNum=10
+AstNum=5
 
 astTimer=time.time()
 astPrevTimes={}
@@ -526,10 +526,7 @@ weaponPrevTimes[currentWeapon]=0
 uniqueId=0
 
 def eventLoop():
-    SVel=0
-    BVel=0
-    FVel=0
-    global projectiles, currentWeapon, uniqueId, weaponPrevTimes, Svel, Bvel, Fvel,homeScreen,running
+    global projectiles, currentWeapon, uniqueId, weaponPrevTimes, homeScreen,running
     pygame.key.set_repeat(50,50)
     pygame.display.init()
     while running:
@@ -569,8 +566,7 @@ def eventLoop():
                       roundedAngle=((5 * round(playerShip.angle/5))%360)
                       x = shipCoords[roundedAngle][0]
                       y = shipCoords[roundedAngle][1]
-                      projectileRect = Rect(x+ships[roundedAngle].get_rect().width/2,
-                        y+ships[roundedAngle].get_rect().height/2,
+                      projectileRect = Rect(shipCoords[roundedAngle][0]+playerShip.rect.x-shipCoords[roundedAngle][0],shipCoords[roundedAngle][1]+playerShip.rect.y-shipCoords[roundedAngle][1],
                          projectileSize, projectileSize)
                       radians = math.radians(playerShip.angle)
                       projectileSpeed = 0.0012
@@ -588,15 +584,31 @@ def eventLoop():
               #Forward
               is_key_pressed = pygame.key.get_pressed()
 
-              if is_key_pressed[pygame.K_RIGHT]:
-                print("right")
+              if is_key_pressed[pygame.K_d] and playerShip.rotSpeed<= 0.001:
+                playerShip.rotSpeed+=0.0001
 
-              elif is_key_pressed[pygame.K_LEFT]:
-                print("left")
+              elif is_key_pressed[pygame.K_a] and playerShip.rotSpeed>= -0.001:
+                playerShip.rotSpeed-=0.0001
+              if is_key_pressed[pygame.K_w]:
+                radians = math.radians(playerShip.angle)
+                playerShip.xVel += 0.00002*math.sin(radians)
+                playerShip.yVel += -0.00002*math.cos(radians)
+      if playerShip.rect.x > screenWidth:
+          playerShip.rect.x = 0 - playerShip.rect.width
+
+      if playerShip.rect.x + playerShip.rect.width < 0:
+          playerShip.rect.x = screenWidth
+
+      if playerShip.rect.y > screenHeight:
+          playerShip.rect.y = 0 - playerShip.rect.height
+
+      if playerShip.rect.y + playerShip.rect.height < 0:
+          playerShip.rect.y = screenHeight
 
       #print(ship.Svel)
-      playerShip.angle=(SVel+5)%360
-      playerShip.angle = (playerShip.angle / 2)
+      playerShip.angle=playerShip.angle+playerShip.rotSpeed
+      playerShip.rect.x +=playerShip.xVel
+      playerShip.rect.y += playerShip.yVel
     time.sleep(0.08)
 
 #can't just pass rect becuase ship might move, and range calculations would be off
@@ -653,12 +665,10 @@ def proj_thread():
         if proj.Type==0:
           currTime=time.time()
           timePast=(currTime-proj.reloadTime)*10
-          print(timePast)
-          if timePast>0.1:
+          if timePast>0.05:
             proj.rect.x += timePast*proj.xstep*10000
             proj.rect.y += timePast*proj.ystep*10000
             proj.reloadTime=time.time()
-            print(proj.rect.y)
 
         if dist_to(proj.shotCoordx,proj.shotCoordy,proj.rect.width,proj.rect.height,proj.rect)>=proj.Range:
           print(dist_to(proj.shotCoordx,proj.shotCoordy,proj.rect.width,proj.rect.height,proj.rect),proj.rect,proj.shotCoordx,proj.shotCoordy,proj.Range)
@@ -852,7 +862,7 @@ def render():
 
     #ship
     roundedAngle=((5 * round(playerShip.angle/5))%360)
-    screen.blit(ships[roundedAngle], shipCoords[roundedAngle])
+    screen.blit(ships[roundedAngle], (shipCoords[roundedAngle][0]+playerShip.rect.x-shipCoords[roundedAngle][0]-ships[roundedAngle].get_width()/2,shipCoords[roundedAngle][1]+playerShip.rect.y-shipCoords[roundedAngle][1]-ships[roundedAngle].get_height()/2))
 
   pygame.display.flip()
 
