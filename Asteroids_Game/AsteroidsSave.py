@@ -558,7 +558,7 @@ def eventLoop():
                     projectileSize = 3
                     damage=30
                     currTime=time.time()
-                    minSpray,maxSpray=(-.3,.3)
+                    minSpray,maxSpray=(-.25,.25)
 
 
                     if currTime-weaponPrevTimes[currentWeapon]>=Reload:
@@ -583,11 +583,11 @@ def eventLoop():
                       projectilesLock.release()
                       weaponPrevTimes[currentWeapon]=time.time()
 
-              if is_key_pressed[pygame.K_d] and playerShip.rotSpeed<=0.0075:
-                playerShip.rotSpeed+=0.00003
+              if is_key_pressed[pygame.K_d]:
+                playerShip.angle+=2.5
 
-              if is_key_pressed[pygame.K_a] and playerShip.rotSpeed>=-0.0075:
-                playerShip.rotSpeed-=0.00003
+              if is_key_pressed[pygame.K_a]:
+                playerShip.rotSpeed-=2.5
 
               if is_key_pressed[pygame.K_w]:
                 radians = math.radians(playerShip.angle)
@@ -607,7 +607,6 @@ def eventLoop():
               playerShip.rect.y = screenHeight
 
       #print(ship.Svel)
-      playerShip.angle=playerShip.angle+playerShip.rotSpeed
       playerShip.rect.x +=playerShip.xVel
       playerShip.rect.y += playerShip.yVel
     time.sleep(0.16)
