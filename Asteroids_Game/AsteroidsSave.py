@@ -5,8 +5,6 @@ import random
 import time
 import math
 import sys
-from utils import get_random_velocity, load_sprite, wrap_position
-from pygame.math import Vector2
 
 #changes name of terminal window
 sys.stdout.write("\x1b]2;Asteroids!\x07")
@@ -17,8 +15,9 @@ pygame.mixer.init()
 pygame.font.init()
 font = pygame.font.Font('freesansbold.ttf', 15)
 weapon0Sound=pygame.mixer.Sound('assets/sounds/weapon0Sound.wav')
-weapon0Sound.set_volume(0.1)
+weapon0Sound.set_volume(0.0)
 screenWidth, screenHeight = 640, 480
+spaceImage=pygame.image.load('assets/images/space.png')
 
 screen = pygame.display.set_mode((screenWidth, screenHeight))
 pygame.display.set_caption('Asteroids!')
@@ -197,126 +196,186 @@ class Asteroid:
         self.__stage = stage
 
 class Projectile:
-  def __init__(self, rect, xstep, ystep, Id,Type,Range,shotCoordx, shotCoordy,damage,explCounter,explX,explY,reloadTime):
+  def __init__(self, rect, xstep, ystep, Id,Type,Range,shotCoordx, shotCoordy,damage,explCounter,explX,explY, reloadTime):
+    self.__rect = rect
+    self.__xstep = xstep
+    self.__ystep = ystep
+    self.__Type = Type
+    self.__Id = Id
+    self.__Range = Range
+    self.__shotCoordx=shotCoordx
+    self.__shotCoordy=shotCoordy
+    self.__damage=damage
+    self.__explCounter = explCounter
+    self.__explX = explX
+    self.__explY = explY
+    self.__reloadTime = reloadTime
+
+  def __str__(self):
+      return 'rect: {} xstep: {} ystep{}'.format(self.__rect,self.__xstep, self.__ystep)
+      
+  @property
+  def rect(self):
+      return self.__rect
+
+  @rect.setter
+  def rect(self, rect):
       self.__rect = rect
-      self.__xstep = xstep
-      self.__ystep = ystep
-      self.__Type = Type
-      self.__Id = Id
-      self.__Range = Range
-      self.__shotCoordx=shotCoordx
-      self.__shotCoordy=shotCoordy
-      self.__damage=damage
+
+  @property
+  def xstep(self):
+      return self.__xstep
+
+  @property
+  def Type(self):
+      return self.__Type
+
+  @property
+  def Id(self):
+      return self.__Id
+
+  @property
+  def ystep(self):
+      return self.__ystep
+  @property
+  def Range(self):
+      return self.__Range
+  @property
+  def shotCoordx(self):
+      return self.__shotCoordx
+  @property
+  def shotCoordy(self):
+      return self.__shotCoordy
+  @shotCoordy.setter
+  def shotCoordy(self, shotCoordy):
+      self.__shotCoordy = shotCoordy
+  @shotCoordx.setter
+  def shotCoordx(self, shotCoordx):
+      self.__shotCoordx = shotCoordx
+  @property
+  def damage(self):
+      return self.__damage
+  @property
+  def explCounter(self):
+      return self.__explCounter
+
+  @explCounter.setter
+  def explCounter(self, explCounter):
       self.__explCounter = explCounter
+
+  @property
+  def explX(self):
+      return self.__explX
+  @property
+  def explY(self):
+      return self.__explY
+  @explX.setter
+  def explX(self, explX):
       self.__explX = explX
+  @explY.setter
+  def explY(self, explY):
       self.__explY = explY
-      self.__time = time
+  @property
+  def reloadTime(self):
+      return self.__reloadTime
 
-      def __str__(self):
-          return 'rect: {} xstep: {} ystep{}'.format(self.__rect,self.__xstep, self.__ystep)
-          
-      @property
-      def rect(self):
-          return self.__rect
+  @reloadTime.setter
+  def reloadTime(self, reloadTime):
+      self.__reloadTime = reloadTime
 
-      @rect.setter
-      def rect(self, rect):
-          self.__rect = rect
+class Ship:
+  def __init__(self,rect,angle,health,xVel,yVel,rotSpeed):
+    self.__rect = rect
+    self.__angle = angle
+    self.__health = health
+    self.__xVel = xVel
+    self.__yVel = yVel
+    self.__rotSpeed = rotSpeed
 
-      @property
-      def xstep(self):
-          return self.__xstep
+  @property
+  def rect(self):
+      return self.__rect
 
-      @property
-      def Type(self):
-          return self.__Type
+  @rect.setter
+  def rect(self, rect):
+      self.__rect = rect
 
-      @property
-      def Id(self):
-          return self.__Id
+  @property
+  def angle(self):
+      return self.__angle
 
-      @property
-      def ystep(self):
-          return self.__ystep
-      @property
-      def Range(self):
-          return self.__Range
-      @property
-      def shotCoordx(self):
-          return self.__shotCoordx
-      @property
-      def shotCoordy(self):
-          return self.__shotCoordy
-      @property
-      def damage(self):
-          return self.__damage
-      @property
-      def explCounter(self):
-          return self.__explCounter
+  @angle.setter
+  def angle(self, angle):
+      self.__angle = angle
 
-      @explCounter.setter
-      def explCounter(self, explCounter):
-          self.__explCounter = explCounter
-      @property
-      def explX(self):
-          return self.__explX
-      @property
-      def explY(self):
-          return self.__explY
+  @property
+  def health(self):
+      return self.__health
 
-      @property
-      def reloadTime(self):
-          return self.__reloadTime
-      @reloadTime.setter
-      def reloadTime(self, reloadTime):
-          self.__reloadTime = reloadTime
+  @health.setter
+  def health(self, health):
+      self.__health = health
 
-Shiphealth = 1000
+  @property
+  def xVel(self):
+      return self.__xVel
 
-UP = Vector2(0, -1)
+  @xVel.setter
+  def xVel(self, xVel):
+      self.__xVel = xVel
 
-class Object:
-    def __init__(self, position, sprite, velocity):
-        self.position = Vector2(position)
-        self.sprite = sprite
-        self.radius = sprite.get_width() / 2
-        self.velocity = Vector2(velocity)
+  @property
+  def yVel(self):
+      return self.__yVel
 
-    def draw(self, surface):
-        blit_position = self.position - Vector2(self.radius)
-        surface.blit(self.sprite, blit_position)
+  @yVel.setter
+  def yVel(self, yVel):
+      self.__yVel = yVel
 
-    def move(self, surface):
-        self.position = wrap_position(self.position + self.velocity, surface)
+  @property
+  def rotSpeed(self):
+      return self.__rotSpeed
 
-    def collides_with(self, other_obj):
-        distance = self.position.distance_to(other_obj.position)
-        return distance < self.radius + other_obj.radius
+  @rotSpeed.setter
+  def rotSpeed(self, rotSpeed):
+      self.__rotSpeed = rotSpeed
+ 
 
-class Ship(Object):
-  Control = 3
-  Acceleration = 0.25
+#Images
+def rot_center(image, angle):
+    """rotate a Surface, maintaining position."""
 
-  def __init__(self, position):
-    self.direction = Vector2(UP)
+    loc = image.get_rect().center  #rot_image is not defined 
+    rot_sprite = pygame.transform.rotate(image, angle)
+    rot_sprite.get_rect().center = loc
+    return rot_sprite
 
-    super().__init__(position, load_sprite("ship"), Vector2(0))
+shipWidth=30
+shipHeight=38
+shipImage = pygame.transform.scale(pygame.image.load("assets/images/ship.png"),(shipWidth,shipHeight))
+shipRotation = 5
+ships = {}
+ships[0] = shipImage
 
-  def rotate(self, clockwise=True):
-    self.direction = Vector2(UP)
-    sign = 1 if clockwise else -1
-    angle = self.Control * sign
-    self.direction.rotate_ip(angle)
+for i in range(shipRotation, 359, shipRotation):
+  ships[i] = rot_center(shipImage, -i)
 
-  def accelerate(self):
-    self.velocity += self.direction * self.Acceleration
+shipX = (screenWidth / 2) - (shipWidth / 2)
+shipY = (screenHeight / 2) - (shipHeight / 2)
+shipRect = Rect(shipX, shipY, shipWidth, shipHeight)
+playerShip = Ship(0,0,0,0,0,0)
+playerShip.rect=shipRect
+playerShip.rotSpeed=0
+playerShip.health=1000
+playerShip.xVel=0
+playerShip.yVel=0
+playerShip.angle=0
 
-  def draw(self, surface):
-    angle = self.direction.angle_to(UP)
-    rotated_surface = rotozoom(self.sprite, angle, 1.0)
-    rotated_surface_size = Vector2(rotated_surface.get_size())
-    blit_position = self.position - rotated_surface_size * 0.5
-    surface.blit(rotated_surface, blit_position)
+
+shipCoords={}
+shipCoords[0]=(ships[0].get_rect().x-ships[0].get_rect().width/2+playerShip.rect.x,ships[0].get_rect().y-ships[0].get_rect().height/2+playerShip.rect.y)
+for i in range(shipRotation,359,shipRotation):
+  shipCoords[i]= (ships[i].get_rect().x-ships[i].get_rect().width/2+playerShip.rect.x,ships[i].get_rect().y-ships[i].get_rect().height/2+playerShip.rect.y)      
 
 screenWidth, screenHeight = 640, 480
 astList = {}
@@ -339,7 +398,6 @@ def asteroidThread():
         astLock.acquire()
         for astKey,ast in astList.items():
             astTimer=time.time()
-            print(astPrevTimes,astList)
             astDeltaTime=astTimer-astPrevTimes[astKey]
 
             ast.rect.x += ast.xstep*astDeltaTime*10
@@ -430,7 +488,7 @@ createAsteroids(AstNum)
 #=====================================================
 
 def home_screen():
-  global homeScreen, astList, projectiles,points,astPrevTimes,uniqueId,uniqueId2,points
+  global homeScreen, astList, projectiles,points,astPrevTimes,uniqueId,uniqueId2,textPoints
   astLock.acquire()
   projectilesLock.acquire()
   uniqueId2=0
@@ -443,54 +501,19 @@ def home_screen():
   shipX = (screenWidth / 2) - (shipWidth / 2)
   shipY = (screenHeight / 2) - (shipHeight / 2)
   shipRect = Rect(shipX, shipY, shipWidth, shipHeight)
-  ship = Ship(0)
-  ship.rect=shipRect
-  ship.angle=0
-  ship.health=1000
+  playerShip = Ship(0,0,0,0,0,0)
+  playerShip.rect=shipRect
+  playerShip.angle=0
+  playerShip.health=1000
   SVel=0
   BVel=0
   FVel=0
   points=0
+  textPoints = font.render(f'Points: {points}', True, white, None)
   currentWeapon = 0
   astLock.release()
   projectilesLock.release()
   createAsteroids(AstNum)
-
-
-#Images
-def rot_center(image, angle):
-    """rotate a Surface, maintaining position."""
-
-    loc = image.get_rect().center  #rot_image is not defined 
-    rot_sprite = pygame.transform.rotate(image, angle)
-    rot_sprite.get_rect().center = loc
-    return rot_sprite
-
-shipWidth=30
-shipHeight=38
-shipImage = pygame.transform.scale(pygame.image.load("assets/images/ship.png"),(shipWidth,shipHeight))
-shipRotation = 5
-ships = {}
-ships[0] = shipImage
-
-for i in range(shipRotation, 359, shipRotation):
-  ships[i] = rot_center(shipImage, -i)
-
-shipX = (screenWidth / 2) - (shipWidth / 2)
-shipY = (screenHeight / 2) - (shipHeight / 2)
-shipRect = Rect(shipX, shipY, shipWidth, shipHeight)
-ship = Ship(0)
-ship.rect=shipRect
-ship.angle=0
-ship.health=1000
-SVel=0
-BVel=0
-FVel=0
-
-shipCoords={}
-shipCoords[0]=(ships[0].get_rect().x-ships[0].get_rect().width/2+ship.rect.x,ships[0].get_rect().y-ships[0].get_rect().height/2+ship.rect.y)
-for i in range(shipRotation,359,shipRotation):
-  shipCoords[i]= (ships[i].get_rect().x-ships[i].get_rect().width/2+ship.rect.x,ships[i].get_rect().y-ships[i].get_rect().height/2+ship.rect.y)
 
 w0explosion = pygame.image.load('assets/images/weapon0explosion.png')
 w0explosion=pygame.transform.scale(w0explosion,(20,20))
@@ -524,7 +547,8 @@ def eventLoop():
             running=False
           if event.type == pygame.KEYDOWN:
               if event.key == pygame.K_ESCAPE:
-                running=False
+                homeScreen=True
+                home_screen()
 
               #Shoot (Code Collapsed)
               if event.key == pygame.K_SPACE:
@@ -535,40 +559,27 @@ def eventLoop():
                     projectileSize = 3
                     damage=30
                     currTime=time.time()
+                    minSpray,maxSpray=(-.3,.3)
+
 
                     if currTime-weaponPrevTimes[currentWeapon]>=Reload:
 
                       weapon0Sound.stop()
                       weapon0Sound.play()
-                      roundedAngle=((5 * round(ship.angle/5))%360)
+                      roundedAngle=((5 * round(playerShip.angle/5))%360)
                       x = shipCoords[roundedAngle][0]
                       y = shipCoords[roundedAngle][1]
                       projectileRect = Rect(x+ships[roundedAngle].get_rect().width/2,
                         y+ships[roundedAngle].get_rect().height/2,
                          projectileSize, projectileSize)
-                      radians = math.radians(ship.angle)
-                      projectileSpeed = 0.0015
+                      radians = math.radians(playerShip.angle)
+                      projectileSpeed = 0.0012
                       projectileType = 0
                       uniqueId += 1
                       proj=Projectile(
-                          projectileRect, 0,
-                          0, 0,
-                          uniqueId,0,0,0,0,0,0,0,0)
-
-                      #have to like redefine attributes for some reason
-                      minSpray,maxSpray=(-.3,.3)
-                      proj.rect=projectileRect
-                      proj.xstep=projectileSpeed * math.sin(radians+random.uniform(minSpray,maxSpray))
-                      proj.ystep=-projectileSpeed * math.cos(radians+random.uniform(minSpray,maxSpray))
-                      proj.Type=0
-                      proj.explCounter=0
-                      proj.Range=Range
-                      proj.shotCoordx=proj.rect.x
-                      proj.shotCoordy=proj.rect.y
-                      proj.damage=damage
-                      proj.explX=0
-                      proj.explY=0
-                      proj.reloadTime=time.time()
+                          projectileRect, projectileSpeed * math.sin(radians+random.uniform(minSpray,maxSpray)),
+                          -projectileSpeed * math.cos(radians+random.uniform(minSpray,maxSpray)), uniqueId,
+                          0,Range,projectileRect.x,projectileRect.y,damage,0,0,0,time.time())
                       projectilesLock.acquire()
                       projectiles[uniqueId]=proj
                       projectilesLock.release()
@@ -579,13 +590,13 @@ def eventLoop():
 
               if is_key_pressed[pygame.K_RIGHT]:
                 print("right")
-                ship.rotate(clockwise=True)
+
               elif is_key_pressed[pygame.K_LEFT]:
                 print("left")
-                ship.rotate(clockwise=False)
+
       #print(ship.Svel)
-      ship.angle=(SVel+5)%360
-      ship.angle = (ship.angle / 2)
+      playerShip.angle=(SVel+5)%360
+      playerShip.angle = (playerShip.angle / 2)
     time.sleep(0.08)
 
 #can't just pass rect becuase ship might move, and range calculations would be off
@@ -641,13 +652,16 @@ def proj_thread():
       for projKey, proj in projectiles.items():
         if proj.Type==0:
           currTime=time.time()
-          timePast=(currTime-proj.reloadTime)*100000
-          if timePast>20:
-            proj.rect.x += timePast*proj.xstep
-            proj.rect.y += timePast*proj.ystep
+          timePast=(currTime-proj.reloadTime)*10
+          print(timePast)
+          if timePast>0.1:
+            proj.rect.x += timePast*proj.xstep*10000
+            proj.rect.y += timePast*proj.ystep*10000
             proj.reloadTime=time.time()
+            print(proj.rect.y)
 
         if dist_to(proj.shotCoordx,proj.shotCoordy,proj.rect.width,proj.rect.height,proj.rect)>=proj.Range:
+          print(dist_to(proj.shotCoordx,proj.shotCoordy,proj.rect.width,proj.rect.height,proj.rect),proj.rect,proj.shotCoordx,proj.shotCoordy,proj.Range)
           keysToRmv.append(projKey)
         astLock.acquire()
         for astKey,ast in astList.items():
@@ -666,7 +680,7 @@ def proj_thread():
               textPoints = font.render(f'Points: {points}', True, white, None)
               astToRmv.append(astKey)
 
-              if points >= 50:
+              if points >= 1000:
                 astLock.release()
                 projectilesLock.release()
                 print('U WIN!!!! JK JUST FOR TESTING LOL')
@@ -675,7 +689,7 @@ def proj_thread():
                 home_screen()
                 astLock.acquire()
                 projectilesLock.acquire()                
-              if ast.rect.width>=20 and ast.rect.height>=20 and homeScreen == False:
+              if ast.rect.width>=40 and ast.rect.height>=40 and homeScreen == False:
 
                 var5=random.randint(-5,5)
                 var6=random.randint(-5,5)
@@ -704,6 +718,9 @@ def proj_thread():
                 var2=random.choice([1,-1])
                 var3=random.choice([1,-1])
                 var4=random.choice([1,-1])
+                while var1==var3 and var2==var4:
+                  var4=random.choice([1,-1])
+
 
                 x=ast.rect.x+ast.rect.width/2-width1/2+popDistance*var1
                 y=ast.rect.y+ast.rect.height/2-height1/2+popDistance*var2
@@ -728,7 +745,7 @@ def proj_thread():
         createAsteroid(*astCreate[i])
       astLock.acquire()
       for key in astToRmv:
-        astList.pop(key)
+          astList.pop(key)
       astLock.release()
       if len(astList)<AstNum*4/5 and homeScreen == False:
           print('if',homeScreen)
@@ -793,24 +810,30 @@ proj_thread.start()
 #=====================================================
 
 
-w0color= (175, 155, 96)
+w0color=  (204, 255, 102)
+#(175, 155, 96)
 black=(0,0,0)
 white=(255,255,255)
 playButton=font.render('PLAY',True,white,None)
 buttonRect=Rect(screenWidth/2-playButton.get_width()/2, screenHeight/2-playButton.get_height()/2,playButton.get_width(),playButton.get_height())
-
+bigFont = pygame.font.Font('freesansbold.ttf', 40)
+asteroidsTitle=bigFont.render('Asteroids',True,white,None)
+titleCoords=(screenWidth/2-asteroidsTitle.get_width()/2,screenHeight/2-asteroidsTitle.get_height()/2-playButton.get_height()*2)
 #Updating
 def render():
   global projectiles,projExplosions
-  screen.fill(0)
+  screen.blit(spaceImage,(0,0))
   if homeScreen==True:
     screen.blit(playButton,(buttonRect.x,buttonRect.y))
+    screen.blit(asteroidsTitle,titleCoords)
   if homeScreen==False:
 
     screen.blit(textPoints,(0,0))
     #asteroids
+    astLock.acquire()
     for key,ast in astList.items():
         screen.blit(ast.image, ast.rect.toPygame())
+    astLock.release()
 
     #projectiles
     projectilesLock.acquire()
@@ -824,11 +847,11 @@ def render():
       if proj.Type==0:
         screen.blit(w0explosion, (proj.explX,proj.explY))
         proj.explCounter+=1
-        if proj.explCounter==4:
+        if proj.explCounter>=4:
           projExplosions.remove(proj)
 
     #ship
-    roundedAngle=((5 * round(ship.angle/5))%360)
+    roundedAngle=((5 * round(playerShip.angle/5))%360)
     screen.blit(ships[roundedAngle], shipCoords[roundedAngle])
 
   pygame.display.flip()
@@ -839,4 +862,3 @@ while running:
     clock.tick(60)
 pygame.quit()
 sys.exit()
-exit(0)
