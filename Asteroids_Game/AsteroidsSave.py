@@ -528,6 +528,7 @@ def eventLoop():
     global projectiles, currentWeapon, uniqueId, weaponPrevTimes, homeScreen,running,prevTime,is_key_pressed
     pygame.key.set_repeat(50,50)
     pygame.display.init()
+    keyCheck=0.01
     while running:
       if homeScreen==True:
         event = pygame.event.poll()
@@ -546,14 +547,14 @@ def eventLoop():
                 homeScreen=True
                 home_screen()
           currTime=time.time()
-          if currTime-prevTime>0.3:
+          if currTime-prevTime>keyCheck:
               is_key_pressed = pygame.key.get_pressed()
               #Shoot (Code Collapsed)
               if is_key_pressed[pygame.K_SPACE]:
 
                   if currentWeapon == 0:
                     Reload=.25
-                    Range=125
+                    Range=200
                     projectileSize = 3
                     damage=30
                     currTime=time.time()
@@ -570,42 +571,40 @@ def eventLoop():
                       projectileRect = Rect(shipCoords[roundedAngle][0]+playerShip.rect.x-shipCoords[roundedAngle][0],shipCoords[roundedAngle][1]+playerShip.rect.y-shipCoords[roundedAngle][1],
                          projectileSize, projectileSize)
                       radians = math.radians(playerShip.angle)
-                      projectileSpeed = 0.0012
+                      projectileSpeed = 0.002
                       projectileType = 0
                       uniqueId += 1
                       proj=Projectile(
                           projectileRect, projectileSpeed * math.sin(radians+random.uniform(minSpray,maxSpray)),
                           -projectileSpeed * math.cos(radians+random.uniform(minSpray,maxSpray)), uniqueId,
-                          0,Range,projectileRect.x,projectileRect.y,damage,0,0,0,time.time())
+                          0,Range,0,0,damage,0,0,0,time.time())
                       projectilesLock.acquire()
                       projectiles[uniqueId]=proj
                       projectilesLock.release()
                       weaponPrevTimes[currentWeapon]=time.time()
+
+              if is_key_pressed[pygame.K_d] and playerShip.rotSpeed<=0.0075:
+                playerShip.rotSpeed+=0.00003
+
+              if is_key_pressed[pygame.K_a] and playerShip.rotSpeed>=-0.0075:
+                playerShip.rotSpeed-=0.00003
+
+              if is_key_pressed[pygame.K_w]:
+                radians = math.radians(playerShip.angle)
+                playerShip.xVel += math.sin(radians)*(currTime-prevTime)*0.0005
+                playerShip.yVel += -math.cos(radians)*(currTime-prevTime)*0.0005
               prevTime=currTime
+          if playerShip.rect.x > screenWidth:
+              playerShip.rect.x = 0 - playerShip.rect.width
 
-          #Forward
+          if playerShip.rect.x + playerShip.rect.width < 0:
+              playerShip.rect.x = screenWidth
 
-          if is_key_pressed[pygame.K_d] and playerShip.rotSpeed<=0.01:
-            playerShip.rotSpeed+=0.00000001
+          if playerShip.rect.y > screenHeight:
+              playerShip.rect.y = 0 - playerShip.rect.height
 
-          if is_key_pressed[pygame.K_a] and playerShip.rotSpeed>=-0.01:
-            playerShip.rotSpeed-=0.00000001
-
-          if is_key_pressed[pygame.K_w]:
-            radians = math.radians(playerShip.angle)
-            playerShip.xVel += 0.00000001*math.sin(radians)
-            playerShip.yVel += -0.00000001*math.cos(radians)
-      if playerShip.rect.x > screenWidth:
-          playerShip.rect.x = 0 - playerShip.rect.width
-
-      if playerShip.rect.x + playerShip.rect.width < 0:
-          playerShip.rect.x = screenWidth
-
-      if playerShip.rect.y > screenHeight:
-          playerShip.rect.y = 0 - playerShip.rect.height
-
-      if playerShip.rect.y + playerShip.rect.height < 0:
-          playerShip.rect.y = screenHeight
+          if playerShip.rect.y + playerShip.rect.height < 0:
+              playerShip.rect.y = screenHeight
 
       #print(ship.Svel)
       playerShip.angle=playerShip.angle+playerShip.rotSpeed
@@ -668,11 +667,26 @@ def proj_thread():
           currTime=time.time()
           timePast=(currTime-proj.reloadTime)*10
           if timePast>0.05:
-            proj.rect.x += timePast*proj.xstep*10000
-            proj.rect.y += timePast*proj.ystep*10000
+            xChange=timePast*proj.xstep*10000
+            yChange=timePast*proj.ystep*10000
+            proj.rect.x += xChange
+            proj.rect.y += yChange
+            proj.shotCoordx+=xChange
+            proj.shotCoordy+=yChange
+            if proj.rect.x > screenWidth:
+              proj.rect.x = 0 - proj.rect.width
+
+            if proj.rect.x + proj.rect.width < 0:
+                proj.rect.x = screenWidth
+
+            if proj.rect.y > screenHeight:
+                proj.rect.y = 0 - proj.rect.height
+
+            if proj.rect.y + proj.rect.height < 0:
+                proj.rect.y = screenHeight
             proj.reloadTime=time.time()
 
-        if dist_to(proj.shotCoordx,proj.shotCoordy,proj.rect.width,proj.rect.height,proj.rect)>=proj.Range:
+        if math.sqrt((proj.shotCoordx*proj.shotCoordx)+(proj.shotCoordy*proj.shotCoordy))>=proj.Range:
           keysToRmv.append(projKey)
         astLock.acquire()
         for astKey,ast in astList.items():
