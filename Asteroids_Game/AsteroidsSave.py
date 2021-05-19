@@ -500,13 +500,12 @@ def home_screen():
   shipX = (screenWidth / 2) - (shipWidth / 2)
   shipY = (screenHeight / 2) - (shipHeight / 2)
   shipRect = Rect(shipX, shipY, shipWidth, shipHeight)
-  playerShip = Ship(0,0,0,0,0,0)
   playerShip.rect=shipRect
-  playerShip.angle=0
+  playerShip.rotSpeed=0
   playerShip.health=1000
-  SVel=0
-  BVel=0
-  FVel=0
+  playerShip.xVel=0
+  playerShip.yVel=0
+  playerShip.angle=0
   points=0
   textPoints = font.render(f'Points: {points}', True, white, None)
   currentWeapon = 0
@@ -612,7 +611,7 @@ def eventLoop():
       playerShip.angle=playerShip.angle+playerShip.rotSpeed
       playerShip.rect.x +=playerShip.xVel
       playerShip.rect.y += playerShip.yVel
-    time.sleep(0.08)
+    time.sleep(0.16)
 
 #can't just pass rect becuase ship might move, and range calculations would be off
 def dist_to(x1,y1,width1,height1,rect):
