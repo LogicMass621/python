@@ -357,8 +357,9 @@ shipRotation = 5
 ships = {}
 ships[0] = shipImage
 
-for i in range(shipRotation, 359, shipRotation):
-  ships[i] = rot_center(shipImage, -i)
+for i in range(shipRotation, 719, shipRotation):
+  print(-i/2)
+  ships[i/2] = rot_center(shipImage, -i/2)
 
 shipX = (screenWidth / 2) - (shipWidth / 2)
 shipY = (screenHeight / 2) - (shipHeight / 2)
@@ -374,8 +375,8 @@ playerShip.angle=0
 
 shipCoords={}
 shipCoords[0]=(ships[0].get_rect().x-ships[0].get_rect().width/2+playerShip.rect.x,ships[0].get_rect().y-ships[0].get_rect().height/2+playerShip.rect.y)
-for i in range(shipRotation,359,shipRotation):
-  shipCoords[i]= (ships[i].get_rect().x-ships[i].get_rect().width/2+playerShip.rect.x,ships[i].get_rect().y-ships[i].get_rect().height/2+playerShip.rect.y)      
+for i in range(shipRotation,719,shipRotation):
+  shipCoords[i/2]= (ships[i/2].get_rect().x-ships[i/2].get_rect().width/2+playerShip.rect.x,ships[i/2].get_rect().y-ships[i/2].get_rect().height/2+playerShip.rect.y)      
 
 screenWidth, screenHeight = 640, 480
 astList = {}
@@ -567,10 +568,9 @@ def eventLoop():
 
                       weapon0Sound.stop()
                       weapon0Sound.play()
-                      roundedAngle=((5 * round(playerShip.angle/5))%360)
-                      x = shipCoords[roundedAngle][0]
-                      y = shipCoords[roundedAngle][1]
-                      projectileRect = Rect(shipCoords[roundedAngle][0]+playerShip.rect.x-shipCoords[roundedAngle][0],shipCoords[roundedAngle][1]+playerShip.rect.y-shipCoords[roundedAngle][1],
+                      x = shipCoords[playerShip.angle][0]
+                      y = shipCoords[playerShip.angle][1]
+                      projectileRect = Rect(shipCoords[playerShip.angle][0]+playerShip.rect.x-shipCoords[playerShip.angle][0],shipCoords[playerShip.angle][1]+playerShip.rect.y-shipCoords[playerShip.angle][1],
                          projectileSize, projectileSize)
                       radians = math.radians(playerShip.angle)
                       uniqueId += 1
@@ -877,8 +877,7 @@ def render():
           projExplosions.remove(proj)
 
     #ship
-    roundedAngle=((5 * round(playerShip.angle/5))%360)
-    screen.blit(ships[roundedAngle], (shipCoords[roundedAngle][0]+playerShip.rect.x-shipCoords[roundedAngle][0]-ships[roundedAngle].get_width()/2,shipCoords[roundedAngle][1]+playerShip.rect.y-shipCoords[roundedAngle][1]-ships[roundedAngle].get_height()/2))
+    screen.blit(ships[playerShip.angle], (shipCoords[playerShip.angle][0]+playerShip.rect.x-shipCoords[playerShip.angle][0]-ships[playerShip.angle].get_width()/2,shipCoords[playerShip.angle][1]+playerShip.rect.y-shipCoords[playerShip.angle][1]-ships[playerShip.angle].get_height()/2))
 
   pygame.display.flip()
 
