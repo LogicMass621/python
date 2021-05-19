@@ -559,7 +559,7 @@ def eventLoop():
                     projectileSize = 3
                     damage=30
                     currTime=time.time()
-                    minSpray,maxSpray=(-.1,.1)
+                    minSpray,maxSpray=(0,0)
                     projectileSpeed = 0.002
 
 
