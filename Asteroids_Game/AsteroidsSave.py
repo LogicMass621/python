@@ -587,7 +587,7 @@ def eventLoop():
                 playerShip.angle+=2.5
 
               if is_key_pressed[pygame.K_a]:
-                playerShip.rotSpeed-=2.5
+                playerShip.angle-=2.5
 
               if is_key_pressed[pygame.K_w]:
                 radians = math.radians(playerShip.angle)
