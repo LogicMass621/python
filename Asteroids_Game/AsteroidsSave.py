@@ -529,6 +529,7 @@ def eventLoop():
     pygame.key.set_repeat(50,50)
     pygame.display.init()
     keyCheck=0.01
+    fluidFriction=0.99998
     while running:
       if homeScreen==True:
         event = pygame.event.poll()
@@ -591,8 +592,8 @@ def eventLoop():
 
               if is_key_pressed[pygame.K_w]:
                 radians = math.radians(playerShip.angle)
-                playerShip.xVel += math.sin(radians)*(currTime-prevTime)*0.0005
-                playerShip.yVel += -math.cos(radians)*(currTime-prevTime)*0.0005
+                playerShip.xVel += math.sin(radians)*(currTime-prevTime)*0.01
+                playerShip.yVel += -math.cos(radians)*(currTime-prevTime)*0.01
               prevTime=currTime
           if playerShip.rect.x > screenWidth:
               playerShip.rect.x = 0 - playerShip.rect.width
@@ -605,10 +606,11 @@ def eventLoop():
 
           if playerShip.rect.y + playerShip.rect.height < 0:
               playerShip.rect.y = screenHeight
-
-      #print(ship.Svel)
-      playerShip.rect.x +=playerShip.xVel
+      playerShip.xVel=playerShip.xVel*fluidFriction
+      playerShip.yVel=playerShip.yVel*fluidFriction
+      playerShip.rect.x += playerShip.xVel
       playerShip.rect.y += playerShip.yVel
+
     time.sleep(0.16)
 
 #can't just pass rect becuase ship might move, and range calculations would be off
