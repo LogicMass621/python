@@ -523,9 +523,10 @@ currentWeapon = 0
 weaponPrevTimes = {}
 weaponPrevTimes[currentWeapon]=0
 uniqueId=0
-
+prevTime=time.time()
+is_key_pressed = pygame.key.get_pressed()
 def eventLoop():
-    global projectiles, currentWeapon, uniqueId, weaponPrevTimes, homeScreen,running
+    global projectiles, currentWeapon, uniqueId, weaponPrevTimes, homeScreen,running,prevTime,is_key_pressed
     pygame.key.set_repeat(50,50)
     pygame.display.init()
     while running:
@@ -545,52 +546,56 @@ def eventLoop():
               if event.key == pygame.K_ESCAPE:
                 homeScreen=True
                 home_screen()
-          is_key_pressed = pygame.key.get_pressed()
-          #Shoot (Code Collapsed)
-          if is_key_pressed[pygame.K_SPACE]:
+          currTime=time.time()
+          if currTime-prevTime>0.3:
+              is_key_pressed = pygame.key.get_pressed()
+              #Shoot (Code Collapsed)
+              if is_key_pressed[pygame.K_SPACE]:
 
-              if currentWeapon == 0:
-                Reload=.25
-                Range=125
-                projectileSize = 3
-                damage=30
-                currTime=time.time()
-                minSpray,maxSpray=(-.3,.3)
+                  if currentWeapon == 0:
+                    Reload=.25
+                    Range=125
+                    projectileSize = 3
+                    damage=30
+                    currTime=time.time()
+                    minSpray,maxSpray=(-.3,.3)
 
 
-                if currTime-weaponPrevTimes[currentWeapon]>=Reload:
+                    if currTime-weaponPrevTimes[currentWeapon]>=Reload:
 
-                  weapon0Sound.stop()
-                  weapon0Sound.play()
-                  roundedAngle=((5 * round(playerShip.angle/5))%360)
-                  x = shipCoords[roundedAngle][0]
-                  y = shipCoords[roundedAngle][1]
-                  projectileRect = Rect(shipCoords[roundedAngle][0]+playerShip.rect.x-shipCoords[roundedAngle][0],shipCoords[roundedAngle][1]+playerShip.rect.y-shipCoords[roundedAngle][1],
-                     projectileSize, projectileSize)
-                  radians = math.radians(playerShip.angle)
-                  projectileSpeed = 0.0012
-                  projectileType = 0
-                  uniqueId += 1
-                  proj=Projectile(
-                      projectileRect, projectileSpeed * math.sin(radians+random.uniform(minSpray,maxSpray)),
-                      -projectileSpeed * math.cos(radians+random.uniform(minSpray,maxSpray)), uniqueId,
-                      0,Range,projectileRect.x,projectileRect.y,damage,0,0,0,time.time())
-                  projectilesLock.acquire()
-                  projectiles[uniqueId]=proj
-                  projectilesLock.release()
-                  weaponPrevTimes[currentWeapon]=time.time()
+                      weapon0Sound.stop()
+                      weapon0Sound.play()
+                      roundedAngle=((5 * round(playerShip.angle/5))%360)
+                      x = shipCoords[roundedAngle][0]
+                      y = shipCoords[roundedAngle][1]
+                      projectileRect = Rect(shipCoords[roundedAngle][0]+playerShip.rect.x-shipCoords[roundedAngle][0],shipCoords[roundedAngle][1]+playerShip.rect.y-shipCoords[roundedAngle][1],
+                         projectileSize, projectileSize)
+                      radians = math.radians(playerShip.angle)
+                      projectileSpeed = 0.0012
+                      projectileType = 0
+                      uniqueId += 1
+                      proj=Projectile(
+                          projectileRect, projectileSpeed * math.sin(radians+random.uniform(minSpray,maxSpray)),
+                          -projectileSpeed * math.cos(radians+random.uniform(minSpray,maxSpray)), uniqueId,
+                          0,Range,projectileRect.x,projectileRect.y,damage,0,0,0,time.time())
+                      projectilesLock.acquire()
+                      projectiles[uniqueId]=proj
+                      projectilesLock.release()
+                      weaponPrevTimes[currentWeapon]=time.time()
+              prevTime=currTime
 
           #Forward
 
-          if is_key_pressed[pygame.K_d] and playerShip.rotSpeed<= 0.001:
-            playerShip.rotSpeed+=0.00000075
+          if is_key_pressed[pygame.K_d] and playerShip.rotSpeed<=0.01:
+            playerShip.rotSpeed+=0.00000001
 
-          if is_key_pressed[pygame.K_a] and playerShip.rotSpeed>= -0.001:
-            playerShip.rotSpeed-=0.00000075
+          if is_key_pressed[pygame.K_a] and playerShip.rotSpeed>=-0.01:
+            playerShip.rotSpeed-=0.00000001
+
           if is_key_pressed[pygame.K_w]:
             radians = math.radians(playerShip.angle)
-            playerShip.xVel += 0.000000002*math.sin(radians)
-            playerShip.yVel += -0.00000002*math.cos(radians)
+            playerShip.xVel += 0.000000001*math.sin(radians)
+            playerShip.yVel += -0.00000001*math.cos(radians)
       if playerShip.rect.x > screenWidth:
           playerShip.rect.x = 0 - playerShip.rect.width
 
