@@ -593,7 +593,7 @@ def eventLoop():
 
           if is_key_pressed[pygame.K_w]:
             radians = math.radians(playerShip.angle)
-            playerShip.xVel += 0.000000001*math.sin(radians)
+            playerShip.xVel += 0.00000001*math.sin(radians)
             playerShip.yVel += -0.00000001*math.cos(radians)
       if playerShip.rect.x > screenWidth:
           playerShip.rect.x = 0 - playerShip.rect.width
