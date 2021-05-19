@@ -529,7 +529,7 @@ def eventLoop():
     pygame.key.set_repeat(50,50)
     pygame.display.init()
     keyCheck=0.01
-    fluidFriction=0.99998
+    fluidFriction=0.99999
     while running:
       if homeScreen==True:
         event = pygame.event.poll()
@@ -555,11 +555,12 @@ def eventLoop():
 
                   if currentWeapon == 0:
                     Reload=.25
-                    Range=200
+                    Range=300
                     projectileSize = 3
                     damage=30
                     currTime=time.time()
-                    minSpray,maxSpray=(-.25,.25)
+                    minSpray,maxSpray=(-.1,.1)
+                    projectileSpeed = 0.002
 
 
                     if currTime-weaponPrevTimes[currentWeapon]>=Reload:
@@ -572,8 +573,6 @@ def eventLoop():
                       projectileRect = Rect(shipCoords[roundedAngle][0]+playerShip.rect.x-shipCoords[roundedAngle][0],shipCoords[roundedAngle][1]+playerShip.rect.y-shipCoords[roundedAngle][1],
                          projectileSize, projectileSize)
                       radians = math.radians(playerShip.angle)
-                      projectileSpeed = 0.002
-                      projectileType = 0
                       uniqueId += 1
                       proj=Projectile(
                           projectileRect, projectileSpeed * math.sin(radians+random.uniform(minSpray,maxSpray)),
@@ -592,8 +591,8 @@ def eventLoop():
 
               if is_key_pressed[pygame.K_w]:
                 radians = math.radians(playerShip.angle)
-                playerShip.xVel += math.sin(radians)*(currTime-prevTime)*0.01
-                playerShip.yVel += -math.cos(radians)*(currTime-prevTime)*0.01
+                playerShip.xVel += math.sin(radians)*(currTime-prevTime)*0.0014
+                playerShip.yVel += -math.cos(radians)*(currTime-prevTime)*0.0014
               prevTime=currTime
           if playerShip.rect.x > screenWidth:
               playerShip.rect.x = 0 - playerShip.rect.width
@@ -667,7 +666,7 @@ def proj_thread():
         if proj.Type==0:
           currTime=time.time()
           timePast=(currTime-proj.reloadTime)*10
-          if timePast>0.05:
+          if timePast>0.03:
             xChange=timePast*proj.xstep*10000
             yChange=timePast*proj.ystep*10000
             proj.rect.x += xChange
@@ -771,6 +770,7 @@ def proj_thread():
         createAsteroid(*astCreate[i])
       astLock.acquire()
       for key in astToRmv:
+        if key in astToRmv:
           astList.pop(key)
       astLock.release()
       if len(astList)<AstNum*4/5 and homeScreen == False:
