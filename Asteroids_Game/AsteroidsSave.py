@@ -10,48 +10,17 @@ import sys
 sys.stdout.write("\x1b]2;Asteroids!\x07")
 
 #Set up the game window
+pygame.mixer.pre_init(44100, -16, 1, 512)
 pygame.init()
-pygame.mixer.init()
 pygame.font.init()
 font = pygame.font.Font('freesansbold.ttf', 15)
 weapon0Sound=pygame.mixer.Sound('assets/sounds/weapon0Sound.wav')
-weapon0Sound.set_volume(0.0)
+weapon0Sound.set_volume(0.05)
 screenWidth, screenHeight = 640, 480
 spaceImage=pygame.image.load('assets/images/space.png')
 
 screen = pygame.display.set_mode((screenWidth, screenHeight))
 pygame.display.set_caption('Asteroids!')
-
-highScoreDict={}
-
-#creates flie if not there
-with open('AsteroidsHighScores.txt','a')  as file:
-  print(file)
-
-#ALWAYS HAS TO BE EMPTY LINE AT END OF FILE
-
-with open('AsteroidsHighScores.txt','r')  as file:
-  for line in file:
-    x=line.split(':')
-    x[1]=x[1][0:len(x[1])-1]
-    #[0:len(x[1])-1] removes the unkown symbol at the end of word,
-    #even though it doesn't physically remove characters,
-    #it just goes thorugh every single character in the string
-    if x[0] in highScoreDict.keys():
-      highScoreDict[x[0]].append(x[1])
-
-    else:
-      highScoreDict[x[0]]=[x[1]]
-    #need to make sure same name can appear multiple times
-print(highScoreDict)
-
-highScore=['name',0]
-for name,scoreLists in highScoreDict.items():
-  for score in scoreLists:
-    if int(score) > highScore[1]:
-       highScore[0]=name
-       highScore[1]=int(score)
-print(highScore)
 
 #Control
 projectiles = {}
@@ -353,13 +322,20 @@ def rot_center(image, angle):
 shipWidth=30
 shipHeight=38
 shipImage = pygame.transform.scale(pygame.image.load("assets/images/ship.png"),(shipWidth,shipHeight))
+invulnShipImage=pygame.transform.scale(pygame.image.load("assets/images/invulnShip.png"),(shipWidth,shipHeight))
 shipRotation = 5
 ships = {}
+invulnShips={}
+invulnShips[0]=invulnShipImage
 ships[0] = shipImage
+invulnLength=2
+invulnDrawTimer=time.time()
+
 
 for i in range(shipRotation, 719, shipRotation):
-  print(-i/2)
   ships[i/2] = rot_center(shipImage, -i/2)
+for i in range(shipRotation, 719, shipRotation):
+  invulnShips[i/2] = rot_center(invulnShipImage, -i/2)
 
 shipX = (screenWidth / 2) - (shipWidth / 2)
 shipY = (screenHeight / 2) - (shipHeight / 2)
@@ -390,12 +366,59 @@ astPrevTimes={}
 for i in range(AstNum):
   astPrevTimes[i]=time.time()
 homeScreen=True
+
+def splitAsteroid(ast):
+  if ast.rect.width>=40 and ast.rect.height>=40 and homeScreen == False:
+    var5=random.randint(-5,5)
+    var6=random.randint(-5,5)
+    area=(ast.rect.width*ast.rect.height)/2
+    width1=int(math.sqrt(area)+var5)
+    height1=int(math.sqrt(area)-var5)
+    width2=int(math.sqrt(area)+var6)
+    height2=int(math.sqrt(area)-var6)
+    popDistance=(ast.rect.width+ast.rect.height)/18
+    astSpeed=5
+    Min,Max=0.5,0.9
+
+    xstep=round(random.uniform(Min,Max),2)*astSpeed
+    ystep=round(random.uniform(Min,Max),2)*astSpeed
+    while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
+      xstep=round(random.uniform(Min,Max),2)*astSpeed
+      ystep=round(random.uniform(Min,Max),2)*astSpeed
+
+    xstep2=round(random.uniform(Min,Max),2)*astSpeed
+    ystep2=round(random.uniform(Min,Max),2)*astSpeed
+    while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
+      xstep2=round(random.uniform(Min,Max),2)*astSpeed
+      ystep2=round(random.uniform(Min,Max),2)*astSpeed
+
+    var1=random.choice([1,-1])
+    var2=random.choice([1,-1])
+    var3=random.choice([1,-1])
+    var4=random.choice([1,-1])
+    while var1==var3 and var2==var4:
+      var4=random.choice([1,-1])
+
+
+    x=ast.rect.x+ast.rect.width/2-width1/2+popDistance*var1
+    y=ast.rect.y+ast.rect.height/2-height1/2+popDistance*var2
+
+    x2=ast.rect.x+ast.rect.width/2-width2/2+popDistance*var3
+    y2=ast.rect.y+ast.rect.height/2-height2/2+popDistance*var4
+    createAsteroid(x,y,width1,height1,xstep*var1,ystep*var2,(ast.stage+1))
+    createAsteroid(x2,y2,width2,height2,xstep2*var3,ystep2*var4,(ast.stage+1))
+
+invulnTime=0
+white=(255,255,255)
+textHealth=font.render(f'Health: {playerShip.health}', True, white, None)
 def asteroidThread():
-    global running,projectiles, astTimer,astPrevTimes
+    global running,projectiles, astTimer,astPrevTimes,invulnTime,points,invulnDrawTimer,points,textPoints,textHealth
     while running:
       if homeScreen==False:
-
+        roundedAngle=(2.5*round(playerShip.angle/2.5))%360
         keysToRmv=[]
+        splitAst=[]
+        shipRect=Rect(playerShip.rect.x-ships[roundedAngle].get_width()/2,playerShip.rect.y-ships[roundedAngle].get_height()/2, shipWidth,shipHeight)
         astLock.acquire()
         for astKey,ast in astList.items():
             astTimer=time.time()
@@ -403,6 +426,22 @@ def asteroidThread():
 
             ast.rect.x += ast.xstep*astDeltaTime*10
             ast.rect.y += ast.ystep*astDeltaTime*10
+            if shipRect.colliderect(ast.rect,0,0) and time.time()-invulnTime>invulnLength:
+              invulnDrawTimer=time.time()
+              playerShip.health -=round(250*1/ast.stage) 
+              points+=ast.stage*50
+              textPoints = font.render(f'Points: {points}', True, white, None)
+              textHealth=font.render(f'Health: {playerShip.health}', True, white, None)
+
+              invulnTime=time.time()
+              shipRect = Rect(shipX, shipY, shipWidth, shipHeight)
+              playerShip.rect=shipRect
+              playerShip.rotSpeed=0
+              playerShip.xVel=0
+              playerShip.yVel=0
+              playerShip.angle=0
+              keysToRmv.append(astKey)
+              splitAst.append(ast)
 
             astPrevTimes[astKey]=time.time()
 
@@ -418,9 +457,14 @@ def asteroidThread():
 
             if ast.rect.y + ast.rect.height < 0:
                 ast.rect.y = screenHeight
-
+        for key in keysToRmv:
+          astList.pop(key)
         astLock.release()
-
+        if playerShip.health<=0:
+          homeScreen==True
+          home_screen()
+        for i in splitAst:
+          splitAsteroid(i)
         time.sleep(0.08)
 
 
@@ -516,7 +560,8 @@ def home_screen():
 
 w0explosion = pygame.image.load('assets/images/weapon0explosion.png')
 w0explosion=pygame.transform.scale(w0explosion,(20,20))
-
+highestScore=0
+highestScoreText=font.render('Best Score: 0',True,white,None)
 
 #Each weapon will have it's own number/state
 currentWeapon = 0
@@ -525,12 +570,18 @@ weaponPrevTimes[currentWeapon]=0
 uniqueId=0
 prevTime=time.time()
 is_key_pressed = pygame.key.get_pressed()
+
+pygame.mixer.set_num_channels(8)
+thrusterChannel=pygame.mixer.Channel(5)
+thrusterAccelSound=pygame.mixer.Sound('assets/sounds/thrusterSound.wav')
+thrusterAccelSound.set_volume(0.1)
+white=(255,255,255)
 def eventLoop():
     global projectiles, currentWeapon, uniqueId, weaponPrevTimes, homeScreen,running,prevTime,is_key_pressed
     pygame.key.set_repeat(50,50)
     pygame.display.init()
     keyCheck=0.01
-    fluidFriction=0.99999
+    fluidFriction=0.999995
     while running:
       if homeScreen==True:
         event = pygame.event.poll()
@@ -548,6 +599,7 @@ def eventLoop():
               if event.key == pygame.K_ESCAPE:
                 homeScreen=True
                 home_screen()
+
           currTime=time.time()
           if currTime-prevTime>keyCheck:
               is_key_pressed = pygame.key.get_pressed()
@@ -556,23 +608,22 @@ def eventLoop():
 
                   if currentWeapon == 0:
                     Reload=.25
-                    Range=300
+                    Range=250
                     projectileSize = 3
                     damage=30
                     currTime=time.time()
                     minSpray,maxSpray=(0,0)
-                    projectileSpeed = 0.002
+                    projectileSpeed = 0.004
 
 
                     if currTime-weaponPrevTimes[currentWeapon]>=Reload:
 
                       weapon0Sound.stop()
                       weapon0Sound.play()
-                      x = shipCoords[playerShip.angle][0]
-                      y = shipCoords[playerShip.angle][1]
-                      projectileRect = Rect(shipCoords[playerShip.angle][0]+playerShip.rect.x-shipCoords[playerShip.angle][0],shipCoords[playerShip.angle][1]+playerShip.rect.y-shipCoords[playerShip.angle][1],
-                         projectileSize, projectileSize)
                       radians = math.radians(playerShip.angle)
+                      roundedAngle= roundedAngle=(2.5*round(playerShip.angle/2.5))%360
+                      projectileRect = Rect(shipCoords[roundedAngle][0]+playerShip.rect.x-shipCoords[roundedAngle][0]+math.sin(radians)*shipWidth,shipCoords[roundedAngle][1]+playerShip.rect.y-shipCoords[roundedAngle][1]-math.cos(radians)*shipHeight,
+                         projectileSize, projectileSize)
                       uniqueId += 1
                       proj=Projectile(
                           projectileRect, projectileSpeed * math.sin(radians+random.uniform(minSpray,maxSpray)),
@@ -584,15 +635,19 @@ def eventLoop():
                       weaponPrevTimes[currentWeapon]=time.time()
 
               if is_key_pressed[pygame.K_d]:
-                playerShip.angle+=2.5
+                playerShip.angle+=3
 
               if is_key_pressed[pygame.K_a]:
-                playerShip.angle-=2.5
-
-              if is_key_pressed[pygame.K_w]:
+                playerShip.angle-=3
+              maxSpeed=0.0023
+              if thrusterChannel.get_busy() == False and is_key_pressed[pygame.K_w]:
+                thrusterChannel.play(thrusterAccelSound)
+              if is_key_pressed[pygame.K_w] == False:
+                thrusterAccelSound.stop()
+              if is_key_pressed[pygame.K_w] and math.sqrt((playerShip.xVel*playerShip.xVel)+(playerShip.yVel*playerShip.yVel))<maxSpeed:
                 radians = math.radians(playerShip.angle)
-                playerShip.xVel += math.sin(radians)*(currTime-prevTime)*0.0014
-                playerShip.yVel += -math.cos(radians)*(currTime-prevTime)*0.0014
+                playerShip.xVel += math.sin(radians)*(currTime-prevTime)*0.003
+                playerShip.yVel += -math.cos(radians)*(currTime-prevTime)*0.003
               prevTime=currTime
           if playerShip.rect.x > screenWidth:
               playerShip.rect.x = 0 - playerShip.rect.width
@@ -610,7 +665,8 @@ def eventLoop():
       playerShip.rect.x += playerShip.xVel
       playerShip.rect.y += playerShip.yVel
 
-    time.sleep(0.16)
+
+    time.sleep(0.08)
 
 #can't just pass rect becuase ship might move, and range calculations would be off
 def dist_to(x1,y1,width1,height1,rect):
@@ -627,31 +683,6 @@ points=0
 white=(255,255,255)
 textPoints = font.render(f'Points: {points}', True, white, None)
 
-#doens't work don't know why :(
-def writeScore():
-  global running
-  loop=False
-  for name,scores in highScoreDict.items():
-      for score in scores:
-        if loop==False: 
-          if points<int(score):
-            print('loop')
-            with open('AsteroidsHighScores.txt','w')  as file:
-              print('open')
-              for line in file:
-                print(line)
-                x=line.split(':')
-                print(x[0],x[1])
-                playerName='test'
-                if x[0]==name and x[1]==score:
-                  print(line)
-                  line.replace(line,f'{playerName}:{points}')
-                  highScoreDict[x[0]]=playerName
-                  highScoreDict[playerName]=points
-                  print(line)
-                  file.close()
-            loop=True
-
 def proj_thread():
   global projectiles,running,asteroids,projExplosions,AstNum,points,textPoints,astPrevTimes,homeScreen
   while running:
@@ -659,7 +690,7 @@ def proj_thread():
 
       keysToRmv=[]
       astToRmv=[]
-      astCreate=[]
+      splitAst=[]
 
       projectilesLock.acquire()
       for projKey, proj in projectiles.items():
@@ -712,67 +743,22 @@ def proj_thread():
                 keysToRmv=[]
                 astToRmv=[]
                 home_screen()
-                astLock.acquire()
-                projectilesLock.acquire()                
-              if ast.rect.width>=40 and ast.rect.height>=40 and homeScreen == False:
-
-                var5=random.randint(-5,5)
-                var6=random.randint(-5,5)
-                area=(ast.rect.width*ast.rect.height)/2
-                width1=int(math.sqrt(area)+var5)
-                height1=int(math.sqrt(area)-var5)
-                width2=int(math.sqrt(area)+var6)
-                height2=int(math.sqrt(area)-var6)
-                popDistance=(ast.rect.width+ast.rect.height)/18
-                astSpeed=5
-                Min,Max=0.5,0.9
-
-                xstep=round(random.uniform(Min,Max),2)*astSpeed
-                ystep=round(random.uniform(Min,Max),2)*astSpeed
-                while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
-                  xstep=round(random.uniform(Min,Max),2)*astSpeed
-                  ystep=round(random.uniform(Min,Max),2)*astSpeed
-
-                xstep2=round(random.uniform(Min,Max),2)*astSpeed
-                ystep2=round(random.uniform(Min,Max),2)*astSpeed
-                while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
-                  xstep2=round(random.uniform(Min,Max),2)*astSpeed
-                  ystep2=round(random.uniform(Min,Max),2)*astSpeed
-
-                var1=random.choice([1,-1])
-                var2=random.choice([1,-1])
-                var3=random.choice([1,-1])
-                var4=random.choice([1,-1])
-                while var1==var3 and var2==var4:
-                  var4=random.choice([1,-1])
-
-
-                x=ast.rect.x+ast.rect.width/2-width1/2+popDistance*var1
-                y=ast.rect.y+ast.rect.height/2-height1/2+popDistance*var2
-
-                x2=ast.rect.x+ast.rect.width/2-width2/2+popDistance*var3
-                y2=ast.rect.y+ast.rect.height/2-height2/2+popDistance*var4
-
-                astCreate.append((x,y,width1,height1,xstep*var1,ystep*var2,(stage+1)))
-
-                astCreate.append((x2,y2,width2,height2,xstep2*var3,ystep2*var4,(stage+1)))
-
-
+              print('splitAsteroid')            
+              splitAst.append(ast)
         astLock.release()
-
 
       for key in keysToRmv:
         if key in projectiles:
           projectiles.pop(key)
       projectilesLock.release()
 
-      for i in range(len(astCreate)):
-        createAsteroid(*astCreate[i])
       astLock.acquire()
       for key in astToRmv:
         if key in astToRmv:
           astList.pop(key)
       astLock.release()
+      for i in splitAst:
+        splitAsteroid(i)
       if len(astList)<AstNum*4/5 and homeScreen == False:
           print('if',homeScreen)
 
@@ -824,7 +810,7 @@ def proj_thread():
                 ystep=round(random.uniform(-1,0),2)*astSpeed
                 xstep=round(random.uniform(Min,Max),2)*astSpeed
             x=random.randint(0,screenHeight)
-            createAsteroid(x,y,w,h,xstep,ystep)
+            createAsteroid(x,y,w,h,xstep,ystep,1)
 
         
       time.sleep(0.06)
@@ -839,7 +825,6 @@ proj_thread.start()
 w0color=  (204, 255, 102)
 #(175, 155, 96)
 black=(0,0,0)
-white=(255,255,255)
 playButton=font.render('PLAY',True,white,None)
 buttonRect=Rect(screenWidth/2-playButton.get_width()/2, screenHeight/2-playButton.get_height()/2,playButton.get_width(),playButton.get_height())
 bigFont = pygame.font.Font('freesansbold.ttf', 40)
@@ -852,9 +837,11 @@ def render():
   if homeScreen==True:
     screen.blit(playButton,(buttonRect.x,buttonRect.y))
     screen.blit(asteroidsTitle,titleCoords)
+    screen.blit(highestScoreText,(screenWidth/2-highestScoreText.get_width()/2,buttonRect.y-playButton.get_height()*3/2))
   if homeScreen==False:
 
     screen.blit(textPoints,(0,0))
+    screen.blit(textHealth,(screenWidth-textHealth.get_width(),0))
     #asteroids
     astLock.acquire()
     for key,ast in astList.items():
@@ -877,8 +864,14 @@ def render():
           projExplosions.remove(proj)
 
     #ship
-    screen.blit(ships[playerShip.angle], (shipCoords[playerShip.angle][0]+playerShip.rect.x-shipCoords[playerShip.angle][0]-ships[playerShip.angle].get_width()/2,shipCoords[playerShip.angle][1]+playerShip.rect.y-shipCoords[playerShip.angle][1]-ships[playerShip.angle].get_height()/2))
-
+    roundedAngle=(2.5*round(playerShip.angle/2.5))%360
+    if time.time()-invulnTime>invulnLength:
+      screen.blit(ships[roundedAngle], (playerShip.rect.x-ships[roundedAngle].get_width()/2,playerShip.rect.y-ships[roundedAngle].get_height()/2))
+    else:
+      if 10*(round(time.time()-invulnDrawTimer,1))%2==0:
+        screen.blit(invulnShips[roundedAngle], (playerShip.rect.x-ships[roundedAngle].get_width()/2,playerShip.rect.y-ships[roundedAngle].get_height()/2))
+      else:
+        screen.blit(ships[roundedAngle], (playerShip.rect.x-ships[roundedAngle].get_width()/2,playerShip.rect.y-ships[roundedAngle].get_height()/2))   
   pygame.display.flip()
 
 
