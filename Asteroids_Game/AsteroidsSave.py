@@ -412,7 +412,7 @@ invulnTime=0
 white=(255,255,255)
 textHealth=font.render(f'Health: {playerShip.health}', True, white, None)
 highestScore=0
-highestScoreText=font.render(f'Best Score: {highestScore}',True,white,None)
+highestScoreText=font.render(f'Highest Score: {highestScore}',True,white,None)
 
 def asteroidThread():
     global running,projectiles, astTimer,astPrevTimes,invulnTime,points,invulnDrawTimer,points,textPoints,textHealth
@@ -482,11 +482,13 @@ def createAsteroids(Number_of_asteroids):
       w,h=random.randint(60, 80),random.randint(60,80)
       while abs(w-h) > 10:
           w,h=random.randint(60, 80),random.randint(60,80)
-
       astRect = Rect(random.randint(0, screenWidth),
                      random.randint(0, screenHeight), w,
                      h)
-
+      while astRect.colliderect(playerShip.rect,0,0):
+        astRect = Rect(random.randint(0, screenWidth),
+                     random.randint(0, screenHeight), w,
+                     h)
       #just to make sure asteroids move faster
       astSpeed=5
       Min,Max=-1,1
@@ -555,7 +557,7 @@ def home_screen():
   playerShip.angle=0
   if points>highestScore:
     highestScore=points
-    highestScoreText=font.render(f'Best Score: {highestScore}',True,white,None)
+    highestScoreText=font.render(f'Highest Score: {highestScore}',True,white,None)
   points=0
   textPoints = font.render(f'Points: {points}', True, white, None)
   currentWeapon = 0
@@ -763,7 +765,7 @@ def proj_thread():
       astLock.release()
       for i in splitAst:
         splitAsteroid(i)
-      if len(astList)<AstNum*4/5 and homeScreen == False:
+      if len(astList)<AstNum+points/200 and homeScreen == False:
           print('if',homeScreen)
 
           w,h=random.randint(60, 80),random.randint(60, 80)
