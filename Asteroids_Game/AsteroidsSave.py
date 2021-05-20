@@ -411,6 +411,9 @@ def splitAsteroid(ast):
 invulnTime=0
 white=(255,255,255)
 textHealth=font.render(f'Health: {playerShip.health}', True, white, None)
+highestScore=0
+highestScoreText=font.render(f'Best Score: {highestScore}',True,white,None)
+
 def asteroidThread():
     global running,projectiles, astTimer,astPrevTimes,invulnTime,points,invulnDrawTimer,points,textPoints,textHealth
     while running:
@@ -432,7 +435,6 @@ def asteroidThread():
               points+=ast.stage*50
               textPoints = font.render(f'Points: {points}', True, white, None)
               textHealth=font.render(f'Health: {playerShip.health}', True, white, None)
-
               invulnTime=time.time()
               shipRect = Rect(shipX, shipY, shipWidth, shipHeight)
               playerShip.rect=shipRect
@@ -532,7 +534,7 @@ createAsteroids(AstNum)
 #=====================================================
 
 def home_screen():
-  global homeScreen, astList, projectiles,points,astPrevTimes,uniqueId,uniqueId2,textPoints
+  global homeScreen, astList, projectiles,points,astPrevTimes,uniqueId,uniqueId2,textPoints,highestScore,highestScoreText
   astLock.acquire()
   projectilesLock.acquire()
   uniqueId2=0
@@ -551,6 +553,9 @@ def home_screen():
   playerShip.xVel=0
   playerShip.yVel=0
   playerShip.angle=0
+  if points>highestScore:
+    highestScore=points
+    highestScoreText=font.render(f'Best Score: {highestScore}',True,white,None)
   points=0
   textPoints = font.render(f'Points: {points}', True, white, None)
   currentWeapon = 0
@@ -560,8 +565,7 @@ def home_screen():
 
 w0explosion = pygame.image.load('assets/images/weapon0explosion.png')
 w0explosion=pygame.transform.scale(w0explosion,(20,20))
-highestScore=0
-highestScoreText=font.render('Best Score: 0',True,white,None)
+
 
 #Each weapon will have it's own number/state
 currentWeapon = 0
@@ -837,7 +841,7 @@ def render():
   if homeScreen==True:
     screen.blit(playButton,(buttonRect.x,buttonRect.y))
     screen.blit(asteroidsTitle,titleCoords)
-    screen.blit(highestScoreText,(screenWidth/2-highestScoreText.get_width()/2,buttonRect.y-playButton.get_height()*3/2))
+    screen.blit(highestScoreText,(screenWidth/2-highestScoreText.get_width()/2,buttonRect.y+playButton.get_height()*3/2))
   if homeScreen==False:
 
     screen.blit(textPoints,(0,0))
