@@ -444,6 +444,8 @@ def asteroidThread():
               playerShip.angle=0
               keysToRmv.append(astKey)
               splitAst.append(ast)
+            if shipRect.colliderect(ast.rect,0,0) and time.time()-invulnTime<invulnLength:
+              invulnTime=time.time()
 
             astPrevTimes[astKey]=time.time()
 
@@ -473,6 +475,13 @@ def asteroidThread():
 ast_thread = threading.Thread(target=asteroidThread)
 ast_thread.start()
 
+#can't just pass rect becuase ship might move, and range calculations would be off
+def dist_to(x1,y1,width1,height1,rect):
+  dist=math.sqrt((x1+width1/2-rect.x+rect.width/2)
+    *(x1+width1/2-rect.x+rect.width/2)
+    +(y1+height1/2-rect.y+rect.height/2)*(y1+height1/2-rect.y+rect.height/2))
+  
+  return dist
 def createAsteroids(Number_of_asteroids):
   global uniqueId2
   #creating random asteroids
@@ -485,7 +494,8 @@ def createAsteroids(Number_of_asteroids):
       astRect = Rect(random.randint(0, screenWidth),
                      random.randint(0, screenHeight), w,
                      h)
-      while astRect.colliderect(playerShip.rect,0,0):
+      while dist_to(astRect.x,astRect.y,astRect.width,astRect.height,shipRect)<200:
+
         astRect = Rect(random.randint(0, screenWidth),
                      random.randint(0, screenHeight), w,
                      h)
@@ -560,6 +570,7 @@ def home_screen():
     highestScoreText=font.render(f'Highest Score: {highestScore}',True,white,None)
   points=0
   textPoints = font.render(f'Points: {points}', True, white, None)
+  textHealth=font.render(f'Health: {playerShip.health}',True, white, None)
   currentWeapon = 0
   astLock.release()
   projectilesLock.release()
@@ -620,8 +631,7 @@ def eventLoop():
                     currTime=time.time()
                     minSpray,maxSpray=(0,0)
                     projectileSpeed = 0.004
-
-
+                    recoil=0.015
                     if currTime-weaponPrevTimes[currentWeapon]>=Reload:
 
                       weapon0Sound.stop()
@@ -635,6 +645,8 @@ def eventLoop():
                           projectileRect, projectileSpeed * math.sin(radians+random.uniform(minSpray,maxSpray)),
                           -projectileSpeed * math.cos(radians+random.uniform(minSpray,maxSpray)), uniqueId,
                           0,Range,0,0,damage,0,0,0,time.time())
+                      playerShip.xVel-=proj.xstep*recoil 
+                      playerShip.yVel-=proj.ystep*recoil
                       projectilesLock.acquire()
                       projectiles[uniqueId]=proj
                       projectilesLock.release()
@@ -673,14 +685,6 @@ def eventLoop():
 
 
     time.sleep(0.08)
-
-#can't just pass rect becuase ship might move, and range calculations would be off
-def dist_to(x1,y1,width1,height1,rect):
-  dist=math.sqrt((x1+width1/2-rect.x+rect.width/2)
-    *(x1+width1/2-rect.x+rect.width/2)
-    +(y1+height1/2-rect.y+rect.height/2)*(y1+height1/2-rect.y+rect.height/2))
-  
-  return dist
     
 event_thread = threading.Thread(target=eventLoop)
 event_thread.start()
@@ -740,16 +744,7 @@ def proj_thread():
               stage=ast.stage
               points+=(stage*50)
               textPoints = font.render(f'Points: {points}', True, white, None)
-              astToRmv.append(astKey)
-
-              if points >= 1000:
-                astLock.release()
-                projectilesLock.release()
-                print('U WIN!!!! JK JUST FOR TESTING LOL')
-                keysToRmv=[]
-                astToRmv=[]
-                home_screen()
-              print('splitAsteroid')            
+              astToRmv.append(astKey)        
               splitAst.append(ast)
         astLock.release()
 
