@@ -496,7 +496,6 @@ def createAsteroids(Number_of_asteroids):
         astRect = Rect(random.randint(0, screenWidth),
                      random.randint(0, screenHeight), w,
                      h)
-        print(dist_to(astRect.x,astRect.y,astRect.width,astRect.height,shipRect))
       #just to make sure asteroids move faster
       astSpeed=5
       Min,Max=-1,1
@@ -544,7 +543,7 @@ createAsteroids(AstNum)
 #=====================================================
 
 def home_screen():
-  global homeScreen, astList, projectiles,points,astPrevTimes,textHealth,uniqueId,uniqueId2,textPoints,highestScore,highestScoreText
+  global homeScreen, astList, projectiles,points,astPrevTimes,textHealth,uniqueId,uniqueId2,textPoints,highestScore,highestScoreText,hyperCharge
   astLock.acquire()
   projectilesLock.acquire()
   uniqueId2=0
@@ -569,6 +568,7 @@ def home_screen():
     highestScoreText=font.render(f'Highest Score: {highestScore}',True,white,None)
   points=0
   textPoints = font.render(f'Points: {points}', True, white, None)
+  hyperCharge=80
   currentWeapon = 0
   astLock.release()
   projectilesLock.release()
@@ -593,8 +593,9 @@ thrusterAccelSound.set_volume(0.1)
 white=(255,255,255)
 maxSpeed=0.0023
 minSpeed=0.00004
+hyperCharge=80
 def eventLoop():
-    global projectiles, currentWeapon,invulnTime, uniqueId, weaponPrevTimes, homeScreen,running,prevTime,is_key_pressed
+    global projectiles, currentWeapon,invulnTime, uniqueId, weaponPrevTimes, homeScreen,running,prevTime,is_key_pressed,hyperCharge
     pygame.key.set_repeat(50,50)
     pygame.display.init()
     keyCheck=0.01
@@ -641,7 +642,6 @@ def eventLoop():
                       roundedAngle= roundedAngle=(2.5*round(playerShip.angle/2.5))%360
                       projectileRect = Rect(ships[roundedAngle].get_rect().x+playerShip.rect.x+math.sin(radians)*shipWidth,ships[roundedAngle].get_rect().y+playerShip.rect.y-math.cos(radians)*shipHeight,
                          projectileSize, projectileSize)
-                      print(playerShip.rect.x)
                       uniqueId += 1
                       proj=Projectile(
                           projectileRect, projectileSpeed * math.sin(radians+random.uniform(minSpray,maxSpray)),
@@ -659,6 +659,14 @@ def eventLoop():
 
               if is_key_pressed[pygame.K_a]:
                 playerShip.angle-=3
+              if is_key_pressed[pygame.K_f] and hyperCharge==80:
+                playerShip.rect.x=random.randint(0,screenWidth)
+                playerShip.rect.y=random.randint(0,screenHeight)
+                hyperCharge=0
+              if hyperCharge<80:
+                hyperCharge+=0.1
+              else:
+                hyperCharge=math.floor(hyperCharge)
 
               if thrusterChannel.get_busy() == False and is_key_pressed[pygame.K_w]:
                 thrusterChannel.play(thrusterAccelSound)
@@ -763,7 +771,8 @@ def proj_thread():
       astLock.release()
       for i in splitAst:
         splitAsteroid(i)
-      if len(astList)<AstNum+points/200 and homeScreen == False:
+
+      if len(astList)<AstNum+points/250 and homeScreen == False:
           w,h=random.randint(60, 80),random.randint(60, 80)
           while abs(w-h) > 22:
             w,h=random.randint(60, 80),random.randint(60, 80)
@@ -817,17 +826,22 @@ proj_thread.start()
 #=====================================================
 
 
-w0color=  (204, 255, 102)
-#(175, 155, 96)
+w0color=(255,121,26)
+#(204, 255, 102)
 black=(0,0,0)
 playButton=font.render('PLAY',True,white,None)
 buttonRect=Rect(screenWidth/2-playButton.get_width()/2, screenHeight/2-playButton.get_height()/2,playButton.get_width(),playButton.get_height())
 bigFont = pygame.font.Font('freesansbold.ttf', 40)
 asteroidsTitle=bigFont.render('Asteroids',True,white,None)
 titleCoords=(screenWidth/2-asteroidsTitle.get_width()/2,screenHeight/2-asteroidsTitle.get_height()/2-playButton.get_height()*2)
+hyperSpaceCoolBar=pygame.Surface((40,80))
+hyperColor=(204,85,0,0.5)
+hyperSpaceCoolBar.fill(hyperColor)
+hyperSpaceCoolBar.set_alpha(128)
+
 #Updating
 def render():
-  global projectiles,projExplosions
+  global projectiles,projExplosions,hyperCharge
   screen.blit(spaceImage,(0,0))
   if homeScreen==True:
     screen.blit(playButton,(buttonRect.x,buttonRect.y))
@@ -837,6 +851,12 @@ def render():
 
     screen.blit(textPoints,(0,0))
     screen.blit(textHealth,(screenWidth-textHealth.get_width(),0))
+    hyperSpaceCoolBar=pygame.Surface((40,hyperCharge))
+    hyperSpaceCoolBar.set_alpha(128)
+    hyperSpaceCoolBar.fill(hyperColor)
+    screen.blit(hyperSpaceCoolBar,(20,380+(80-hyperCharge)))
+
+
     #asteroids
     astLock.acquire()
     for key,ast in astList.items():
@@ -849,6 +869,7 @@ def render():
       if proj.Type==0:
         pygame.draw.rect(screen, w0color, proj.rect.toPygame())
     projectilesLock.release()
+
 
     #explosions
     for proj in projExplosions:
