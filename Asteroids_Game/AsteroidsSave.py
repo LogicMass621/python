@@ -7,7 +7,7 @@ import math
 import sys
 
 #changes name of terminal window
-sys.stdout.write("\x1b]2;Asteroids!\x07")
+sys.stdout.write("\x1b]2;Rocks!\x07")
 
 #Set up the game window
 pygame.mixer.pre_init(44100, -16, 1, 512)   #fixes sound delay
@@ -20,7 +20,7 @@ screenWidth, screenHeight = 640, 480
 spaceImage=pygame.image.load('assets/images/space.png')
 
 screen = pygame.display.set_mode((screenWidth, screenHeight))
-pygame.display.set_caption('Asteroids!')
+pygame.display.set_caption('Rocks!')
 
 #Control
 projectiles = {}
@@ -832,7 +832,7 @@ black=(0,0,0)
 playButton=font.render('PLAY',True,white,None)
 buttonRect=Rect(screenWidth/2-playButton.get_width()/2, screenHeight/2-playButton.get_height()/2,playButton.get_width(),playButton.get_height())
 bigFont = pygame.font.Font('freesansbold.ttf', 40)
-asteroidsTitle=bigFont.render('Asteroids',True,white,None)
+asteroidsTitle=bigFont.render('Rocks!',True,white,None)
 titleCoords=(screenWidth/2-asteroidsTitle.get_width()/2,screenHeight/2-asteroidsTitle.get_height()/2-playButton.get_height()*2)
 hyperSpaceCoolBar=pygame.Surface((40,80))
 hyperColor=(204,85,0,0.5)
@@ -851,11 +851,6 @@ def render():
 
     screen.blit(textPoints,(0,0))
     screen.blit(textHealth,(screenWidth-textHealth.get_width(),0))
-    hyperSpaceCoolBar=pygame.Surface((40,hyperCharge))
-    hyperSpaceCoolBar.set_alpha(128)
-    hyperSpaceCoolBar.fill(hyperColor)
-    screen.blit(hyperSpaceCoolBar,(20,380+(80-hyperCharge)))
-
 
     #asteroids
     astLock.acquire()
@@ -887,7 +882,13 @@ def render():
       if 10*(round(time.time()-invulnDrawTimer,1))%2==0:
         screen.blit(invulnShips[roundedAngle], (playerShip.rect.x-ships[roundedAngle].get_width()/2,playerShip.rect.y-ships[roundedAngle].get_height()/2))
       else:
-        screen.blit(ships[roundedAngle], (playerShip.rect.x-ships[roundedAngle].get_width()/2,playerShip.rect.y-ships[roundedAngle].get_height()/2))   
+        screen.blit(ships[roundedAngle], (playerShip.rect.x-ships[roundedAngle].get_width()/2,playerShip.rect.y-ships[roundedAngle].get_height()/2))
+    hyperSpaceCoolBar=pygame.Surface((40,hyperCharge))
+    hyperSpaceCoolBar.set_alpha(128)
+    hyperSpaceCoolBar.fill(hyperColor)
+    screen.blit(hyperSpaceCoolBar,(20,380+(80-hyperCharge)))
+
+
   pygame.display.flip()
 
 
