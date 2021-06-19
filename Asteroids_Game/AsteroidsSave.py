@@ -352,132 +352,25 @@ screenWidth, screenHeight = 640, 480
 astList = {}
 astImage = pygame.image.load('assets/images/asteroid.png')
 uniqueId2=0
-astLock=threading.Lock()
-AstNum=5
 
 astTimer=time.time()
 astPrevTimes={}
+
+#difficulty
+AstNum=0
+
 for i in range(AstNum):
   astPrevTimes[i]=time.time()
 homeScreen=True
 
-def splitAsteroid(ast):
-  if ast.rect.width>=40 and ast.rect.height>=40 and homeScreen == False:
-    var5=random.randint(-5,5)
-    var6=random.randint(-5,5)
-    area=(ast.rect.width*ast.rect.height)/2
-    width1=int(math.sqrt(area)+var5)
-    height1=int(math.sqrt(area)-var5)
-    width2=int(math.sqrt(area)+var6)
-    height2=int(math.sqrt(area)-var6)
-    popDistance=(ast.rect.width+ast.rect.height)/18
-    astSpeed=5
-    Min,Max=0.5,0.9
-
-    xstep=round(random.uniform(Min,Max),2)*astSpeed
-    ystep=round(random.uniform(Min,Max),2)*astSpeed
-    while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
-      xstep=round(random.uniform(Min,Max),2)*astSpeed
-      ystep=round(random.uniform(Min,Max),2)*astSpeed
-
-    xstep2=round(random.uniform(Min,Max),2)*astSpeed
-    ystep2=round(random.uniform(Min,Max),2)*astSpeed
-    while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
-      xstep2=round(random.uniform(Min,Max),2)*astSpeed
-      ystep2=round(random.uniform(Min,Max),2)*astSpeed
-
-    var1=random.choice([1,-1])
-    var2=random.choice([1,-1])
-    var3=random.choice([1,-1])
-    var4=random.choice([1,-1])
-    while var1==var3 and var2==var4:
-      var4=random.choice([1,-1])
-
-
-    x=ast.rect.x+ast.rect.width/2-width1/2+popDistance*var1
-    y=ast.rect.y+ast.rect.height/2-height1/2+popDistance*var2
-
-    x2=ast.rect.x+ast.rect.width/2-width2/2+popDistance*var3
-    y2=ast.rect.y+ast.rect.height/2-height2/2+popDistance*var4
-    createAsteroid(x,y,width1,height1,xstep*var1,ystep*var2,(ast.stage+1))
-    createAsteroid(x2,y2,width2,height2,xstep2*var3,ystep2*var4,(ast.stage+1))
-
-white=(255,255,255)
-textHealth=font.render(f'Health: {playerShip.health}', True, white, None)
-highestScore=0
-highestScoreText=font.render(f'Highest Score: {highestScore}',True,white,None)
-invulnTime=time.time()
-
-def asteroidThread():
-    global running,projectiles, astTimer,astPrevTimes,homeScreen,invulnTime,points,invulnDrawTimer,points,textPoints,textHealth
-    while running:
-      if homeScreen==False:
-        roundedAngle=(2.5*round(playerShip.angle/2.5))%360
-        keysToRmv=[]
-        splitAst=[]
-        shipRect=Rect(playerShip.rect.x-ships[roundedAngle].get_width()/2,playerShip.rect.y-ships[roundedAngle].get_height()/2, shipWidth,shipHeight)
-        astLock.acquire()
-        for astKey,ast in astList.items():
-            astTimer=time.time()
-            astDeltaTime=astTimer-astPrevTimes[astKey]
-
-            ast.rect.x += ast.xstep*astDeltaTime*10
-            ast.rect.y += ast.ystep*astDeltaTime*10
-            roundedAngle=(2.5*round(playerShip.angle/2.5))%360
-            shipRect=Rect(playerShip.rect.x-ships[roundedAngle].get_width()/2,playerShip.rect.y-ships[roundedAngle].get_height()/2,ships[roundedAngle].get_width(),ships[roundedAngle].get_height())
-            if ast.rect.colliderect(shipRect,5,5) and time.time()-invulnTime>invulnLength:
-              invulnDrawTimer=time.time()
-              playerShip.health -=round(250*1/ast.stage) 
-              points+=ast.stage*50
-              textPoints = font.render(f'Points: {points}', True, white, None)
-              textHealth=font.render(f'Health: {playerShip.health}', True, white, None)
-              invulnTime=time.time()
-              shipRect = Rect(shipX, shipY, shipWidth, shipHeight)
-              playerShip.rect=shipRect
-              playerShip.rotSpeed=0
-              playerShip.xVel=0
-              playerShip.yVel=0
-              playerShip.angle=0
-              keysToRmv.append(astKey)
-              splitAst.append(ast)
-            if ast.rect.colliderect(shipRect,5,5) and time.time()-invulnTime<invulnLength:
-              invulnTime=time.time()
-
-            astPrevTimes[astKey]=time.time()
-
-            #check for boundaries and come in from other side
-            if ast.rect.x > screenWidth:
-                ast.rect.x = 0 - ast.rect.width
-
-            if ast.rect.x + ast.rect.width < 0:
-                ast.rect.x = screenWidth
-
-            if ast.rect.y > screenHeight:
-                ast.rect.y = 0 - ast.rect.height
-
-            if ast.rect.y + ast.rect.height < 0:
-                ast.rect.y = screenHeight
-        for key in keysToRmv:
-          astList.pop(key)
-        astLock.release()
-        if playerShip.health<=0:
-          homeScreen=True
-          home_screen()
-        for i in splitAst:
-          splitAsteroid(i)
-        time.sleep(0.08)
-
-
-ast_thread = threading.Thread(target=asteroidThread)
-ast_thread.start()
-
-#can't just pass rect becuase ship might move, and range calculations would be off
 def dist_to(x1,y1,width1,height1,rect):
   dist=math.sqrt((x1+width1/2-rect.x+rect.width/2)
     *(x1+width1/2-rect.x+rect.width/2)
     +(y1+height1/2-rect.y+rect.height/2)*(y1+height1/2-rect.y+rect.height/2))
   
   return dist
+  
+astLock=threading.Lock()
 
 def createAsteroids(Number_of_asteroids):
   global uniqueId2
@@ -538,8 +431,120 @@ def createAsteroid(x,y,w,h,xstep,ystep,astStage):
 
     uniqueId2+=1
 
-#difficulty
+def splitAsteroid(ast):
+  if ast.rect.width>=40 and ast.rect.height>=40 and homeScreen == False:
+    var5=random.randint(-5,5)
+    var6=random.randint(-5,5)
+    area=(ast.rect.width*ast.rect.height)/2
+    width1=int(math.sqrt(area)+var5)
+    height1=int(math.sqrt(area)-var5)
+    width2=int(math.sqrt(area)+var6)
+    height2=int(math.sqrt(area)-var6)
+    popDistance=(ast.rect.width+ast.rect.height)/18
+    astSpeed=5
+    Min,Max=0.5,0.9
+
+    xstep=round(random.uniform(Min,Max),2)*astSpeed
+    ystep=round(random.uniform(Min,Max),2)*astSpeed
+    while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
+      xstep=round(random.uniform(Min,Max),2)*astSpeed
+      ystep=round(random.uniform(Min,Max),2)*astSpeed
+
+    xstep2=round(random.uniform(Min,Max),2)*astSpeed
+    ystep2=round(random.uniform(Min,Max),2)*astSpeed
+    while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
+      xstep2=round(random.uniform(Min,Max),2)*astSpeed
+      ystep2=round(random.uniform(Min,Max),2)*astSpeed
+
+    var1=random.choice([1,-1])
+    var2=random.choice([1,-1])
+    var3=random.choice([1,-1])
+    var4=random.choice([1,-1])
+    while var1==var3 and var2==var4:
+      var4=random.choice([1,-1])
+
+
+    x=ast.rect.x+ast.rect.width/2-width1/2+popDistance*var1
+    y=ast.rect.y+ast.rect.height/2-height1/2+popDistance*var2
+
+    x2=ast.rect.x+ast.rect.width/2-width2/2+popDistance*var3
+    y2=ast.rect.y+ast.rect.height/2-height2/2+popDistance*var4
+    createAsteroid(x,y,width1,height1,xstep*var1,ystep*var2,(ast.stage+1))
+    createAsteroid(x2,y2,width2,height2,xstep2*var3,ystep2*var4,(ast.stage+1))
+
 createAsteroids(AstNum)
+
+white=(255,255,255)
+textHealth=font.render(f'Health: {playerShip.health}', True, white, None)
+highestScore=0
+highestScoreText=font.render(f'Highest Score: {highestScore}',True,white,None)
+invulnTime=time.time()
+
+def asteroidThread():
+    global running,projectiles, astTimer,astPrevTimes,homeScreen,invulnTime,points,invulnDrawTimer,points,textPoints,textHealth
+    while running:
+      if homeScreen==False:
+        roundedAngle=(2.5*round(playerShip.angle/2.5))%360
+        keysToRmv=[]
+        splitAst=[]
+        shipRect=Rect(playerShip.rect.x-ships[roundedAngle].get_width()/2,playerShip.rect.y-ships[roundedAngle].get_height()/2, shipWidth,shipHeight)
+        astLock.acquire()
+        for astKey,ast in astList.items():
+            astTimer=time.time()
+            astDeltaTime=astTimer-astPrevTimes[astKey]
+
+            ast.rect.x += ast.xstep*astDeltaTime*10
+            ast.rect.y += ast.ystep*astDeltaTime*10
+            roundedAngle=(2.5*round(playerShip.angle/2.5))%360
+            shipRect=Rect(playerShip.rect.x-ships[roundedAngle].get_width()/2,playerShip.rect.y-ships[roundedAngle].get_height()/2,ships[roundedAngle].get_width(),ships[roundedAngle].get_height())
+            if ast.rect.colliderect(shipRect,5,5) and time.time()-invulnTime>invulnLength:
+              invulnDrawTimer=time.time()
+              playerShip.health -=round(250*1/ast.stage) 
+              points+=ast.stage*50
+              textPoints = font.render(f'Points: {points}', True, white, None)
+              textHealth=font.render(f'Health: {playerShip.health}', True, white, None)
+              invulnTime=time.time()
+              shipRect = Rect(shipX, shipY, shipWidth, shipHeight)
+              playerShip.rect=shipRect
+              playerShip.rotSpeed=0
+              playerShip.xVel=0
+              playerShip.yVel=0
+              playerShip.angle=0
+              keysToRmv.append(astKey)
+              splitAst.append(ast)
+
+            if ast.rect.colliderect(shipRect,5,5) and time.time()-invulnTime<invulnLength:
+              invulnTime=time.time()
+
+            astPrevTimes[astKey]=time.time()
+
+            #check for boundaries and come in from other side
+            if ast.rect.x > screenWidth:
+                ast.rect.x = 0 - ast.rect.width
+
+            if ast.rect.x + ast.rect.width < 0:
+                ast.rect.x = screenWidth
+
+            if ast.rect.y > screenHeight:
+                ast.rect.y = 0 - ast.rect.height
+
+            if ast.rect.y + ast.rect.height < 0:
+                ast.rect.y = screenHeight
+        for key in keysToRmv:
+          astList.pop(key)
+        astLock.release()
+        if playerShip.health<=0:
+          homeScreen=True
+          home_screen()
+        for i in splitAst:
+          splitAsteroid(i)
+        time.sleep(0.08)
+
+
+ast_thread = threading.Thread(target=asteroidThread)
+ast_thread.start()
+
+
 #=====================================================
 
 def home_screen():
@@ -632,7 +637,7 @@ def eventLoop():
                     damage=30
                     currTime=time.time()
                     minSpray,maxSpray=(0,0)
-                    projectileSpeed = 0.004
+                    projectileSpeed = 0.002
                     recoil=0.015
                     if currTime-weaponPrevTimes[currentWeapon]>=Reload and time.time()-invulnTime>invulnLength:
 
@@ -644,8 +649,8 @@ def eventLoop():
                          projectileSize, projectileSize)
                       uniqueId += 1
                       proj=Projectile(
-                          projectileRect, projectileSpeed * math.sin(radians+random.uniform(minSpray,maxSpray)),
-                          -projectileSpeed * math.cos(radians+random.uniform(minSpray,maxSpray)), uniqueId,
+                          projectileRect, playerShip.xVel + projectileSpeed * math.sin(radians+random.uniform(minSpray,maxSpray)),
+                          playerShip.yVel-projectileSpeed * math.cos(radians+random.uniform(minSpray,maxSpray)), uniqueId,
                           0,Range,0,0,damage,0,0,0,time.time())
                       playerShip.xVel-=proj.xstep*recoil 
                       playerShip.yVel-=proj.ystep*recoil
@@ -674,8 +679,8 @@ def eventLoop():
                 thrusterAccelSound.stop()
               if is_key_pressed[pygame.K_w] and math.sqrt((playerShip.xVel*playerShip.xVel)+(playerShip.yVel*playerShip.yVel))<maxSpeed:
                 radians = math.radians(playerShip.angle)
-                playerShip.xVel += math.sin(radians)*(currTime-prevTime)*0.003
-                playerShip.yVel += -math.cos(radians)*(currTime-prevTime)*0.003
+                playerShip.xVel += math.sin(radians)*(currTime-prevTime)*0.0025
+                playerShip.yVel += -math.cos(radians)*(currTime-prevTime)*0.0025
               prevTime=currTime
           if playerShip.rect.x > screenWidth:
               playerShip.rect.x = 0 - playerShip.rect.width
@@ -772,7 +777,8 @@ def proj_thread():
       for i in splitAst:
         splitAsteroid(i)
 
-      if len(astList)<AstNum+points/250 and homeScreen == False:
+      if len(astList)==0 and homeScreen == False:
+        for i in range(math.floor(points/150)):
           w,h=random.randint(60, 80),random.randint(60, 80)
           while abs(w-h) > 22:
             w,h=random.randint(60, 80),random.randint(60, 80)
