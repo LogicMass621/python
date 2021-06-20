@@ -522,27 +522,26 @@ def asteroidThread():
 
             #check for boundaries and come in from other side
             if ast.rect.x > screenWidth-ast.rect.width and ast.xstep>0:
-              ast.rect.x = 0 - ast.rect.width+(ast.rect.x-screenWidth-ast.rect.width)
+              ast.rect.x = 0 - ast.rect.width
               tempAstObj= Asteroid(Rect(screenWidth-ast.rect.width,ast.rect.y,ast.rect.width,ast.rect.height)
                 , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
               tempAsts[tempAstObj.uniqueId2]=tempAstObj
 
             if ast.rect.x < 0 and ast.xstep<0:
-              ast.rect.x = screenWidth+ast.rect.x
+              ast.rect.x = screenWidth
               tempAstObj= Asteroid(Rect(0,ast.rect.y,ast.rect.width,ast.rect.height)
                 , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
               tempAsts[tempAstObj.uniqueId2]=tempAstObj
 
             if ast.rect.y > screenHeight - ast.rect.height and ast.ystep>0:
-              print((ast.rect.y-screenHeight+ast.rect.height))
-              ast.rect.y = 0-ast.rect.height + (ast.rect.y-screenHeight+ast.rect.height)
+              ast.rect.y = 0-ast.rect.height
 
               tempAstObj= Asteroid(Rect(ast.rect.x,screenHeight-ast.rect.height,ast.rect.width,ast.rect.height)
                 , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
               tempAsts[tempAstObj.uniqueId2]=tempAstObj
 
             if ast.rect.y < 0 and ast.ystep<0:
-              ast.rect.y = screenHeight+ast.rect.y
+              ast.rect.y = screenHeight
               tempAstObj= Asteroid(Rect(ast.rect.x,0,ast.rect.width,ast.rect.height)
                 , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
               tempAsts[tempAstObj.uniqueId2]=tempAstObj
@@ -710,10 +709,10 @@ def eventLoop():
                       weaponPrevTimes[currentWeapon]=time.time()
 
               if is_key_pressed[pygame.K_d]:
-                playerShip.angle+=3
+                playerShip.angle+=2.5
 
               if is_key_pressed[pygame.K_a]:
-                playerShip.angle-=3
+                playerShip.angle-=2.5
               if is_key_pressed[pygame.K_f] and hyperCharge==80:
                 playerShip.rect.x=random.randint(0,screenWidth)
                 playerShip.rect.y=random.randint(0,screenHeight)
