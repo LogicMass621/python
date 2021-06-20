@@ -118,9 +118,9 @@ class Asteroid:
         self.__health=health
         self.__stage=stage
 
-    def __str__(self):
-        return 'rect: {} xstep: {} ystep{}'.format(self.__rect, self.__xstep,
-                                                   self.__ystep,self.__uniqueId2)
+    #def __str__(self):
+        #return 'rect: {} xstep: {} ystep{}'.format(self.__rect, self.__xstep,
+                                                   #self.__ystep,self.__uniqueId2)
 
     @property
     def rect(self):
@@ -351,13 +351,14 @@ playerShip.angle=0
 screenWidth, screenHeight = 640, 480
 astList = {}
 astImage = pygame.image.load('assets/images/asteroid.png')
+tempAstImage = pygame.image.load('assets/images/tempAst.png')
 uniqueId2=0
 
 astTimer=time.time()
 astPrevTimes={}
 
 #difficulty
-AstNum=0
+AstNum=4
 
 for i in range(AstNum):
   astPrevTimes[i]=time.time()
@@ -479,9 +480,10 @@ textHealth=font.render(f'Health: {playerShip.health}', True, white, None)
 highestScore=0
 highestScoreText=font.render(f'Highest Score: {highestScore}',True,white,None)
 invulnTime=time.time()
-
+tempAsts={}
+tempAstRmv=[]
 def asteroidThread():
-    global running,projectiles, astTimer,astPrevTimes,homeScreen,invulnTime,points,invulnDrawTimer,points,textPoints,textHealth
+    global running,projectiles,tempAstRmv, astTimer,astPrevTimes,homeScreen,invulnTime,points,invulnDrawTimer,points,textPoints,textHealth
     while running:
       if homeScreen==False:
         roundedAngle=(2.5*round(playerShip.angle/2.5))%360
@@ -519,18 +521,63 @@ def asteroidThread():
             astPrevTimes[astKey]=time.time()
 
             #check for boundaries and come in from other side
-            if ast.rect.x > screenWidth:
-                ast.rect.x = 0 - ast.rect.width
+            if ast.rect.x > screenWidth-ast.rect.width and ast.xstep>0:
+              ast.rect.x = 0 - ast.rect.width
+              tempAstObj= Asteroid(Rect(screenWidth-ast.rect.width,ast.rect.y,ast.rect.width,ast.rect.height)
+                , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
+              tempAsts[tempAstObj.uniqueId2]=tempAstObj
 
-            if ast.rect.x + ast.rect.width < 0:
-                ast.rect.x = screenWidth
+            if ast.rect.x < 0 and ast.xstep<0:
+              ast.rect.x = screenWidth
+              tempAstObj= Asteroid(Rect(0,ast.rect.y,ast.rect.width,ast.rect.height)
+                , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
+              tempAsts[tempAstObj.uniqueId2]=tempAstObj
 
-            if ast.rect.y > screenHeight:
-                ast.rect.y = 0 - ast.rect.height
+            if ast.rect.y > screenHeight - ast.rect.height and ast.ystep>0:
+              ast.rect.y = 0-ast.rect.height
+              tempAstObj= Asteroid(Rect(ast.rect.x,screenHeight-ast.rect.height,ast.rect.width,ast.rect.height)
+                , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
+              tempAsts[tempAstObj.uniqueId2]=tempAstObj
 
-            if ast.rect.y + ast.rect.height < 0:
-                ast.rect.y = screenHeight
+            if ast.rect.y < 0 and ast.ystep<0:
+              ast.rect.y = screenHeight
+              tempAstObj= Asteroid(Rect(ast.rect.x,0,ast.rect.width,ast.rect.height)
+                , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
+              tempAsts[tempAstObj.uniqueId2]=tempAstObj
+
+        for key,ast in tempAsts.items():
+          if ast.rect.colliderect(shipRect,5,5) and time.time()-invulnTime>invulnLength:
+              invulnDrawTimer=time.time()
+              playerShip.health -=round(250*1/ast.stage) 
+              points+=ast.stage*50
+              textPoints = font.render(f'Points: {points}', True, white, None)
+              textHealth=font.render(f'Health: {playerShip.health}', True, white, None)
+              invulnTime=time.time()
+              shipRect = Rect(shipX, shipY, shipWidth, shipHeight)
+              playerShip.rect=shipRect
+              playerShip.rotSpeed=0
+              playerShip.xVel=0
+              playerShip.yVel=0
+              playerShip.angle=0
+              keysToRmv.append(ast.uniqueId2)
+              splitAst.append(ast)
+          ast.rect.x+=ast.xstep * astDeltaTime * 10
+          ast.rect.y+=ast.ystep * astDeltaTime * 10
+          if ast.rect.x>screenWidth:
+            tempAstRmv.append(ast.uniqueId2)
+          if ast.rect.x<0-ast.rect.width and ast.xstep<0:
+            tempAstRmv.append(ast.uniqueId2)
+          if ast.rect.y>screenHeight and ast.ystep>0:
+            tempAstRmv.append(ast.uniqueId2)
+          if ast.rect.y<0-ast.rect.height and ast.ystep<0:
+            tempAstRmv.append(ast.uniqueId2)
+        for key in tempAstRmv:
+          tempAsts.pop(key)
+        tempAstRmv=[]
+
         for key in keysToRmv:
+          if key in tempAsts:
+            tempAsts.pop(key)
           astList.pop(key)
         astLock.release()
         if playerShip.health<=0:
@@ -575,6 +622,7 @@ def home_screen():
   textPoints = font.render(f'Points: {points}', True, white, None)
   hyperCharge=80
   currentWeapon = 0
+  tempAsts={}
   astLock.release()
   projectilesLock.release()
   createAsteroids(AstNum)
@@ -596,7 +644,7 @@ thrusterChannel=pygame.mixer.Channel(5)
 thrusterAccelSound=pygame.mixer.Sound('assets/sounds/thrusterSound.wav')
 thrusterAccelSound.set_volume(0.1)
 white=(255,255,255)
-maxSpeed=0.0023
+maxSpeed=0.002
 minSpeed=0.00004
 hyperCharge=80
 def eventLoop():
@@ -747,7 +795,8 @@ def proj_thread():
         if math.sqrt((proj.shotCoordx*proj.shotCoordx)+(proj.shotCoordy*proj.shotCoordy))>=proj.Range:
           keysToRmv.append(projKey)
         astLock.acquire()
-        for astKey,ast in astList.items():
+        combinedDict={**astList, **tempAsts}
+        for astKey,ast in combinedDict.items():
           if ast.rect.colliderect(proj.rect,5,5): #5 is ast.image.get_rect().width-ast.rect.width
             if proj.Type==0:
               proj.explX=proj.rect.x-10
@@ -771,8 +820,9 @@ def proj_thread():
 
       astLock.acquire()
       for key in astToRmv:
-        if key in astToRmv:
-          astList.pop(key)
+        astList.pop(key)
+        if key in tempAsts:
+          tempAsts.pop(key)
       astLock.release()
       for i in splitAst:
         splitAsteroid(i)
@@ -862,8 +912,13 @@ def render():
     astLock.acquire()
     for key,ast in astList.items():
         screen.blit(ast.image, ast.rect.toPygame())
+    for key,ast in tempAsts.items():
+      screen.blit(ast.image,ast.rect.toPygame())
     astLock.release()
 
+
+
+    
     #projectiles
     projectilesLock.acquire()
     for key, proj in projectiles.items():
