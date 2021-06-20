@@ -328,7 +328,7 @@ ships = {}
 invulnShips={}
 invulnShips[0]=invulnShipImage
 ships[0] = shipImage
-invulnLength=3
+invulnLength=10000
 invulnDrawTimer=time.time()
 
 
@@ -524,26 +524,26 @@ def asteroidThread():
             if ast.rect.x > screenWidth-ast.rect.width and ast.xstep>0:
               ast.rect.x = 0 - ast.rect.width
               tempAstObj= Asteroid(Rect(screenWidth-ast.rect.width,ast.rect.y,ast.rect.width,ast.rect.height)
-                , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
+                , pygame.transform.scale(tempAstImage, (ast.rect.width+5, ast.rect.height+5)), ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
               tempAsts[tempAstObj.uniqueId2]=tempAstObj
 
             if ast.rect.x < 0 and ast.xstep<0:
               ast.rect.x = screenWidth
               tempAstObj= Asteroid(Rect(0,ast.rect.y,ast.rect.width,ast.rect.height)
-                , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
+                , pygame.transform.scale(tempAstImage, (ast.rect.width+5, ast.rect.height+5)), ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
               tempAsts[tempAstObj.uniqueId2]=tempAstObj
 
             if ast.rect.y > screenHeight - ast.rect.height and ast.ystep>0:
               ast.rect.y = 0-ast.rect.height
 
               tempAstObj= Asteroid(Rect(ast.rect.x,screenHeight-ast.rect.height,ast.rect.width,ast.rect.height)
-                , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
+                , pygame.transform.scale(tempAstImage, (ast.rect.width+5, ast.rect.height+5)), ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
               tempAsts[tempAstObj.uniqueId2]=tempAstObj
 
             if ast.rect.y < 0 and ast.ystep<0:
               ast.rect.y = screenHeight
               tempAstObj= Asteroid(Rect(ast.rect.x,0,ast.rect.width,ast.rect.height)
-                , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
+                , pygame.transform.scale(tempAstImage, (ast.rect.width+5, ast.rect.height+5)), ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
               tempAsts[tempAstObj.uniqueId2]=tempAstObj
 
         for key,ast in tempAsts.items():
@@ -564,16 +564,23 @@ def asteroidThread():
               splitAst.append(ast)
           ast.rect.x+=ast.xstep * astDeltaTime * 10
           ast.rect.y+=ast.ystep * astDeltaTime * 10
-          if ast.rect.x>screenWidth:
+          astWidth=ast.image.get_width()
+          astHeight= ast.image.get_height()
+          if ast.rect.x-astWidth>screenWidth:
+            print('1')
             tempAstRmv.append(ast.uniqueId2)
-          if ast.rect.x<0-ast.rect.width and ast.xstep<0:
+          if ast.rect.x+astWidth<0:
+            print('2')
             tempAstRmv.append(ast.uniqueId2)
-          if ast.rect.y>screenHeight and ast.ystep>0:
+          if ast.rect.y-astHeight>screenHeight:
+            print('3')
             tempAstRmv.append(ast.uniqueId2)
-          if ast.rect.y<0-ast.rect.height and ast.ystep<0:
+          if ast.rect.y+astHeight<0:
+            print('4')
             tempAstRmv.append(ast.uniqueId2)
         for key in tempAstRmv:
-          tempAsts.pop(key)
+          if key in tempAsts:
+            tempAsts.pop(key)
         tempAstRmv=[]
 
         for key in keysToRmv:
@@ -621,7 +628,7 @@ def home_screen():
     highestScoreText=font.render(f'Highest Score: {highestScore}',True,white,None)
   points=0
   textPoints = font.render(f'Points: {points}', True, white, None)
-  hyperCharge=80
+  hyperCharge=40
   currentWeapon = 0
   tempAsts={}
   astLock.release()
@@ -647,7 +654,7 @@ thrusterAccelSound.set_volume(0.1)
 white=(255,255,255)
 maxSpeed=0.002
 minSpeed=0.00004
-hyperCharge=80
+hyperCharge=40
 def eventLoop():
     global projectiles, currentWeapon,invulnTime, uniqueId, weaponPrevTimes, homeScreen,running,prevTime,is_key_pressed,hyperCharge
     pygame.key.set_repeat(50,50)
@@ -701,8 +708,8 @@ def eventLoop():
                           projectileRect, playerShip.xVel + projectileSpeed * math.sin(radians+random.uniform(minSpray,maxSpray)),
                           playerShip.yVel-projectileSpeed * math.cos(radians+random.uniform(minSpray,maxSpray)), uniqueId,
                           0,Range,0,0,damage,0,0,0,time.time())
-                      playerShip.xVel-=proj.xstep*recoil 
-                      playerShip.yVel-=proj.ystep*recoil
+                      playerShip.rect.x-=proj.xstep*recoil 
+                      playerShip.rect.y-=proj.ystep*recoil
                       projectilesLock.acquire()
                       projectiles[uniqueId]=proj
                       projectilesLock.release()
@@ -713,11 +720,11 @@ def eventLoop():
 
               if is_key_pressed[pygame.K_a]:
                 playerShip.angle-=2.5
-              if is_key_pressed[pygame.K_f] and hyperCharge==80:
+              if is_key_pressed[pygame.K_s] and hyperCharge==40:
                 playerShip.rect.x=random.randint(0,screenWidth)
                 playerShip.rect.y=random.randint(0,screenHeight)
                 hyperCharge=0
-              if hyperCharge<80:
+              if hyperCharge<40:
                 hyperCharge+=0.1
               else:
                 hyperCharge=math.floor(hyperCharge)
@@ -781,22 +788,21 @@ def proj_thread():
             proj.shotCoordx+=xChange
             proj.shotCoordy+=yChange
             if proj.rect.x > screenWidth:
-              proj.rect.x = 0 - proj.rect.width
+              proj.rect.x = 0
 
-            if proj.rect.x + proj.rect.width < 0:
+            if proj.rect.x < 0:
                 proj.rect.x = screenWidth
 
             if proj.rect.y > screenHeight:
-                proj.rect.y = 0 - proj.rect.height
-
-            if proj.rect.y + proj.rect.height < 0:
+                proj.rect.y = 0
+            if proj.rect.y < 0:
                 proj.rect.y = screenHeight
             proj.reloadTime=time.time()
 
         if math.sqrt((proj.shotCoordx*proj.shotCoordx)+(proj.shotCoordy*proj.shotCoordy))>=proj.Range:
           keysToRmv.append(projKey)
         astLock.acquire()
-        combinedDict={**astList, **tempAsts}
+        combinedDict=astList | tempAsts
         for astKey,ast in combinedDict.items():
           if ast.rect.colliderect(proj.rect,5,5): #5 is ast.image.get_rect().width-ast.rect.width
             if proj.Type==0:
