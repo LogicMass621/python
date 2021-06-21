@@ -328,7 +328,7 @@ ships = {}
 invulnShips={}
 invulnShips[0]=invulnShipImage
 ships[0] = shipImage
-invulnLength=10000
+invulnLength=3
 invulnDrawTimer=time.time()
 
 
@@ -524,26 +524,26 @@ def asteroidThread():
             if ast.rect.x > screenWidth-ast.rect.width and ast.xstep>0:
               ast.rect.x = 0 - ast.rect.width
               tempAstObj= Asteroid(Rect(screenWidth-ast.rect.width,ast.rect.y,ast.rect.width,ast.rect.height)
-                , pygame.transform.scale(tempAstImage, (ast.rect.width+5, ast.rect.height+5)), ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
+                , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
               tempAsts[tempAstObj.uniqueId2]=tempAstObj
 
             if ast.rect.x < 0 and ast.xstep<0:
               ast.rect.x = screenWidth
               tempAstObj= Asteroid(Rect(0,ast.rect.y,ast.rect.width,ast.rect.height)
-                , pygame.transform.scale(tempAstImage, (ast.rect.width+5, ast.rect.height+5)), ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
+                , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
               tempAsts[tempAstObj.uniqueId2]=tempAstObj
 
             if ast.rect.y > screenHeight - ast.rect.height and ast.ystep>0:
               ast.rect.y = 0-ast.rect.height
 
               tempAstObj= Asteroid(Rect(ast.rect.x,screenHeight-ast.rect.height,ast.rect.width,ast.rect.height)
-                , pygame.transform.scale(tempAstImage, (ast.rect.width+5, ast.rect.height+5)), ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
+                , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
               tempAsts[tempAstObj.uniqueId2]=tempAstObj
 
             if ast.rect.y < 0 and ast.ystep<0:
               ast.rect.y = screenHeight
               tempAstObj= Asteroid(Rect(ast.rect.x,0,ast.rect.width,ast.rect.height)
-                , pygame.transform.scale(tempAstImage, (ast.rect.width+5, ast.rect.height+5)), ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
+                , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
               tempAsts[tempAstObj.uniqueId2]=tempAstObj
 
         for key,ast in tempAsts.items():
