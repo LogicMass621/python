@@ -566,17 +566,10 @@ def asteroidThread():
           ast.rect.y+=ast.ystep * astDeltaTime * 10
           astWidth=ast.image.get_width()
           astHeight= ast.image.get_height()
-          if ast.rect.x-astWidth>screenWidth:
-            print('1')
-            tempAstRmv.append(ast.uniqueId2)
-          if ast.rect.x+astWidth<0:
-            print('2')
-            tempAstRmv.append(ast.uniqueId2)
-          if ast.rect.y-astHeight>screenHeight:
-            print('3')
-            tempAstRmv.append(ast.uniqueId2)
-          if ast.rect.y+astHeight<0:
-            print('4')
+          if not(ast.rect.x+ast.rect.width >= 0 and \
+            screenWidth >= ast.rect.x and \
+            ast.rect.y+ast.rect.height >= 0 and \
+            0+screenHeight >= ast.rect.y):
             tempAstRmv.append(ast.uniqueId2)
         for key in tempAstRmv:
           if key in tempAsts:
