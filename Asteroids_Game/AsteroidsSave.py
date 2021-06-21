@@ -346,7 +346,8 @@ playerShip.rotSpeed=0
 playerShip.health=1000
 playerShip.xVel=0
 playerShip.yVel=0
-playerShip.angle=0      
+playerShip.angle=0
+textColor= (255,107,0)      
 
 screenWidth, screenHeight = 640, 480
 astList = {}
@@ -476,7 +477,8 @@ def splitAsteroid(ast):
 createAsteroids(AstNum)
 
 white=(255,255,255)
-textHealth=font.render(f'Health: {playerShip.health}', True, white, None)
+textHealth=font.render(f'Health: {playerShip.health}', True, textColor
+, None)
 highestScore=0
 highestScoreText=font.render(f'Highest Score: {highestScore}',True,white,None)
 invulnTime=time.time()
@@ -503,8 +505,8 @@ def asteroidThread():
               invulnDrawTimer=time.time()
               playerShip.health -=round(250*1/ast.stage) 
               points+=ast.stage*50
-              textPoints = font.render(f'Points: {points}', True, white, None)
-              textHealth=font.render(f'Health: {playerShip.health}', True, white, None)
+              textPoints = font.render(f'Points: {points}', True, textColor, None)
+              textHealth=font.render(f'Health: {playerShip.health}', True, textColor, None)
               invulnTime=time.time()
               shipRect = Rect(shipX, shipY, shipWidth, shipHeight)
               playerShip.rect=shipRect
@@ -551,8 +553,8 @@ def asteroidThread():
               invulnDrawTimer=time.time()
               playerShip.health -=round(250*1/ast.stage) 
               points+=ast.stage*50
-              textPoints = font.render(f'Points: {points}', True, white, None)
-              textHealth=font.render(f'Health: {playerShip.health}', True, white, None)
+              textPoints = font.render(f'Points: {points}', True, textColor, None)
+              textHealth=font.render(f'Health: {playerShip.health}', True, textColor, None)
               invulnTime=time.time()
               shipRect = Rect(shipX, shipY, shipWidth, shipHeight)
               playerShip.rect=shipRect
@@ -612,7 +614,7 @@ def home_screen():
   playerShip.rect=shipRect
   playerShip.rotSpeed=0
   playerShip.health=1000
-  textHealth=font.render(f'Health: {playerShip.health}',True, white, None)
+  textHealth=font.render(f'Health: {playerShip.health}',True, textColor, None)
   playerShip.xVel=0
   playerShip.yVel=0
   playerShip.angle=0
@@ -620,8 +622,8 @@ def home_screen():
     highestScore=points
     highestScoreText=font.render(f'Highest Score: {highestScore}',True,white,None)
   points=0
-  textPoints = font.render(f'Points: {points}', True, white, None)
-  hyperCharge=40
+  textPoints = font.render(f'Points: {points}', True, textColor, None)
+  hyperCharge=60
   currentWeapon = 0
   tempAsts={}
   astLock.release()
@@ -644,10 +646,12 @@ pygame.mixer.set_num_channels(8)
 thrusterChannel=pygame.mixer.Channel(5)
 thrusterAccelSound=pygame.mixer.Sound('assets/sounds/thrusterSound.wav')
 thrusterAccelSound.set_volume(0.1)
-white=(255,255,255)
 maxSpeed=0.002
 minSpeed=0.00004
-hyperCharge=40
+hyperChargeLength=60
+hyperCharge=hyperChargeLength
+#hyperChargeTime is the seconds it takes to fully charge bar
+hyperChargeTime=10
 def eventLoop():
     global projectiles, currentWeapon,invulnTime, uniqueId, weaponPrevTimes, homeScreen,running,prevTime,is_key_pressed,hyperCharge
     pygame.key.set_repeat(50,50)
@@ -707,20 +711,20 @@ def eventLoop():
                       projectiles[uniqueId]=proj
                       projectilesLock.release()
                       weaponPrevTimes[currentWeapon]=time.time()
-
+              timePast=currTime-prevTime
               if is_key_pressed[pygame.K_d]:
                 playerShip.angle+=2.5
 
               if is_key_pressed[pygame.K_a]:
                 playerShip.angle-=2.5
-              if is_key_pressed[pygame.K_s] and hyperCharge==40:
+              if is_key_pressed[pygame.K_s] and math.floor(hyperCharge)==hyperChargeLength:
                 playerShip.rect.x=random.randint(0,screenWidth)
                 playerShip.rect.y=random.randint(0,screenHeight)
                 hyperCharge=0
-              if hyperCharge<40:
-                hyperCharge+=0.1
+              if hyperCharge<hyperChargeLength:
+                hyperCharge+=timePast*hyperChargeLength/hyperChargeTime #hyperChargeTime is the seconds it takes to fully charge bar
               else:
-                hyperCharge=math.floor(hyperCharge)
+                pass
 
               if thrusterChannel.get_busy() == False and is_key_pressed[pygame.K_w]:
                 thrusterChannel.play(thrusterAccelSound)
@@ -728,8 +732,8 @@ def eventLoop():
                 thrusterAccelSound.stop()
               if is_key_pressed[pygame.K_w] and math.sqrt((playerShip.xVel*playerShip.xVel)+(playerShip.yVel*playerShip.yVel))<maxSpeed:
                 radians = math.radians(playerShip.angle)
-                playerShip.xVel += math.sin(radians)*(currTime-prevTime)*0.0025
-                playerShip.yVel += -math.cos(radians)*(currTime-prevTime)*0.0025
+                playerShip.xVel += math.sin(radians)*timePast*0.0025
+                playerShip.yVel += -math.cos(radians)*timePast*0.0025
               prevTime=currTime
           if playerShip.rect.x > screenWidth:
               playerShip.rect.x = 0 - playerShip.rect.width
@@ -756,8 +760,7 @@ event_thread = threading.Thread(target=eventLoop)
 event_thread.start()
 projExplosions=[]
 points=0
-white=(255,255,255)
-textPoints = font.render(f'Points: {points}', True, white, None)
+textPoints = font.render(f'Points: {points}', True, textColor, None)
 
 def proj_thread():
   global projectiles,running,asteroids,projExplosions,AstNum,points,textPoints,astPrevTimes,homeScreen
@@ -808,7 +811,7 @@ def proj_thread():
             if ast.health<=0:
               stage=ast.stage
               points+=(stage*50)
-              textPoints = font.render(f'Points: {points}', True, white, None)
+              textPoints = font.render(f'Points: {points}', True, textColor, None)
               astToRmv.append(astKey)        
               splitAst.append(ast)
         astLock.release()
