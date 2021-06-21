@@ -524,29 +524,33 @@ def asteroidThread():
 
             #check for boundaries and come in from other side
             if ast.rect.x > screenWidth-ast.rect.width and ast.xstep>0:
-              ast.rect.x = 0 - ast.rect.width
-              tempAstObj= Asteroid(Rect(screenWidth-ast.rect.width,ast.rect.y,ast.rect.width,ast.rect.height)
-                , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
-              tempAsts[tempAstObj.uniqueId2]=tempAstObj
+              if not(ast.uniqueId2 in tempAsts.keys()):
+                ast.rect.x = 0 - ast.rect.width
+                tempAstObj= Asteroid(Rect(screenWidth-ast.rect.width,ast.rect.y,ast.rect.width,ast.rect.height)
+                  , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
+                tempAsts[tempAstObj.uniqueId2]=tempAstObj
 
             if ast.rect.x < 0 and ast.xstep<0:
-              ast.rect.x = screenWidth
-              tempAstObj= Asteroid(Rect(0,ast.rect.y,ast.rect.width,ast.rect.height)
-                , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
-              tempAsts[tempAstObj.uniqueId2]=tempAstObj
+              if not(ast.uniqueId2 in tempAsts.keys()):
+                ast.rect.x = screenWidth
+                tempAstObj= Asteroid(Rect(0,ast.rect.y,ast.rect.width,ast.rect.height)
+                  , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
+                tempAsts[tempAstObj.uniqueId2]=tempAstObj
 
             if ast.rect.y > screenHeight - ast.rect.height and ast.ystep>0:
-              ast.rect.y = 0-ast.rect.height
+              if not(ast.uniqueId2 in tempAsts.keys()):
+                ast.rect.y = 0-ast.rect.height
 
-              tempAstObj= Asteroid(Rect(ast.rect.x,screenHeight-ast.rect.height,ast.rect.width,ast.rect.height)
-                , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
-              tempAsts[tempAstObj.uniqueId2]=tempAstObj
+                tempAstObj= Asteroid(Rect(ast.rect.x,screenHeight-ast.rect.height,ast.rect.width,ast.rect.height)
+                  , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
+                tempAsts[tempAstObj.uniqueId2]=tempAstObj
 
             if ast.rect.y < 0 and ast.ystep<0:
-              ast.rect.y = screenHeight
-              tempAstObj= Asteroid(Rect(ast.rect.x,0,ast.rect.width,ast.rect.height)
-                , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
-              tempAsts[tempAstObj.uniqueId2]=tempAstObj
+              if not(ast.uniqueId2 in tempAsts.keys()):
+                ast.rect.y = screenHeight
+                tempAstObj= Asteroid(Rect(ast.rect.x,0,ast.rect.width,ast.rect.height)
+                  , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
+                tempAsts[tempAstObj.uniqueId2]=tempAstObj
 
         for key,ast in tempAsts.items():
           if ast.rect.colliderect(shipRect,5,5) and time.time()-invulnTime>invulnLength:
@@ -651,7 +655,7 @@ minSpeed=0.00004
 hyperChargeLength=60
 hyperCharge=hyperChargeLength
 #hyperChargeTime is the seconds it takes to fully charge bar
-hyperChargeTime=10
+hyperChargeTime=7
 def eventLoop():
     global projectiles, currentWeapon,invulnTime, uniqueId, weaponPrevTimes, homeScreen,running,prevTime,is_key_pressed,hyperCharge
     pygame.key.set_repeat(50,50)
@@ -912,13 +916,20 @@ def render():
     screen.blit(textHealth,(screenWidth-textHealth.get_width(),0))
 
     #asteroids
+    keyList={}
     astLock.acquire()
     for key,ast in astList.items():
-        screen.blit(ast.image, ast.rect.toPygame())
+        keyList[ast.uniqueId2]=[ast]
     for key,ast in tempAsts.items():
-      screen.blit(ast.image,ast.rect.toPygame())
+        if ast.uniqueId2 in keyList:
+          keyList[ast.uniqueId2].append(ast)
+        else:
+          keyList[ast.uniqueId2]=[ast]
     astLock.release()
-
+    for key, List in keyList.items():     #keeps draw order for temp asts
+      for i in List:
+        screen.blit(i.image, i.rect.toPygame())
+        pygame.draw.rect(screen,white,i.rect.toPygame())
 
 
     
