@@ -525,30 +525,33 @@ def asteroidThread():
             #check for boundaries and come in from other side
             if ast.rect.x > screenWidth-ast.rect.width and ast.xstep>0:
               if not(ast.uniqueId2 in tempAsts.keys()):
+                tempX=ast.rect.x
                 ast.rect.x = 0 - ast.rect.width
-                tempAstObj= Asteroid(Rect(screenWidth-ast.rect.width,ast.rect.y,ast.rect.width,ast.rect.height)
+                tempAstObj= Asteroid(Rect(tempX,ast.rect.y,ast.rect.width,ast.rect.height)
                   , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
                 tempAsts[tempAstObj.uniqueId2]=tempAstObj
 
             if ast.rect.x < 0 and ast.xstep<0:
               if not(ast.uniqueId2 in tempAsts.keys()):
+                tempX=ast.rect.x
                 ast.rect.x = screenWidth+ast.rect.x
-                tempAstObj= Asteroid(Rect(0,ast.rect.y,ast.rect.width,ast.rect.height)
+                tempAstObj= Asteroid(Rect(tempX,ast.rect.y,ast.rect.width,ast.rect.height)
                   , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
                 tempAsts[tempAstObj.uniqueId2]=tempAstObj
 
             if ast.rect.y > screenHeight - ast.rect.height and ast.ystep>0:
               if not(ast.uniqueId2 in tempAsts.keys()):
+                tempY=ast.rect.y
                 ast.rect.y = 0-ast.rect.height
-
-                tempAstObj= Asteroid(Rect(ast.rect.x,screenHeight-ast.rect.height,ast.rect.width,ast.rect.height)
+                tempAstObj= Asteroid(Rect(ast.rect.x,tempY,ast.rect.width,ast.rect.height)
                   , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
                 tempAsts[tempAstObj.uniqueId2]=tempAstObj
 
             if ast.rect.y < 0 and ast.ystep<0:
               if not(ast.uniqueId2 in tempAsts.keys()):
+                tempY=ast.rect.y
                 ast.rect.y = screenHeight+ast.rect.y
-                tempAstObj= Asteroid(Rect(ast.rect.x,0,ast.rect.width,ast.rect.height)
+                tempAstObj= Asteroid(Rect(ast.rect.x,tempY,ast.rect.width,ast.rect.height)
                   , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
                 tempAsts[tempAstObj.uniqueId2]=tempAstObj
 
@@ -770,7 +773,7 @@ points=0
 textPoints = font.render(f'Points: {points}', True, textColor, None)
 
 def proj_thread():
-  global projectiles,running,asteroids,projExplosions,AstNum,points,textPoints,astPrevTimes,homeScreen,invulnDrawTimer, invulnTime
+  global projectiles,running,asteroids,projExplosions,AstNum,points,textPoints,astPrevTimes,homeScreen,invulnDrawTimer,AstNum, invulnTime,astList,astPrevTimes
   while running:
     while homeScreen==False:
 
@@ -805,8 +808,14 @@ def proj_thread():
         if math.sqrt((proj.shotCoordx*proj.shotCoordx)+(proj.shotCoordy*proj.shotCoordy))>=proj.Range:
           keysToRmv.append(projKey)
         astLock.acquire()
-        tempDict=astList.copy()
-        tempDict.update(tempAsts)
+        if len(tempAsts)>0:
+          tempDict={}
+          for key,ast in astList.items():
+            tempDict[key]=ast
+          for key,ast in tempAsts.items():
+            tempDict[key+len(astList)]=ast
+        else:
+          tempDict=astList
         for astKey,ast in tempDict.items():
           if ast.rect.colliderect(proj.rect,5,5): #5 is ast.image.get_rect().width-ast.rect.width
             if proj.Type==0:
@@ -839,7 +848,10 @@ def proj_thread():
         splitAsteroid(i)
 
       if len(astList)==0 and homeScreen == False:
-        createAsteroids(math.floor(points/200))
+        astNum+=1
+        createAsteroids(astNum)
+        for astKey,ast in astList.items():
+          astPrevTimes[astKey]=time.time()
         invulnTime=time.time()
         invulnDrawTimer=time.time()
       time.sleep(0.06)
