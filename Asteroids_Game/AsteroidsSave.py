@@ -434,7 +434,7 @@ def createAsteroid(x,y,w,h,xstep,ystep,astStage):
     uniqueId2+=1
 
 def splitAsteroid(ast):
-  if ast.rect.width>=40 and ast.rect.height>=40 and homeScreen == False:
+  if ast.stage < 3 and homeScreen == False:
     var5=random.randint(-5,5)
     var6=random.randint(-5,5)
     area=(ast.rect.width*ast.rect.height)/2
@@ -532,7 +532,7 @@ def asteroidThread():
 
             if ast.rect.x < 0 and ast.xstep<0:
               if not(ast.uniqueId2 in tempAsts.keys()):
-                ast.rect.x = screenWidth
+                ast.rect.x = screenWidth+ast.rect.x
                 tempAstObj= Asteroid(Rect(0,ast.rect.y,ast.rect.width,ast.rect.height)
                   , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
                 tempAsts[tempAstObj.uniqueId2]=tempAstObj
@@ -547,7 +547,7 @@ def asteroidThread():
 
             if ast.rect.y < 0 and ast.ystep<0:
               if not(ast.uniqueId2 in tempAsts.keys()):
-                ast.rect.y = screenHeight
+                ast.rect.y = screenHeight+ast.rect.y
                 tempAstObj= Asteroid(Rect(ast.rect.x,0,ast.rect.width,ast.rect.height)
                   , ast.image, ast.xstep, ast.ystep,ast.uniqueId2,ast.health,ast.stage)
                 tempAsts[tempAstObj.uniqueId2]=tempAstObj
@@ -654,10 +654,13 @@ maxSpeed=0.002
 minSpeed=0.00004
 hyperChargeLength=60
 hyperCharge=hyperChargeLength
+currTime=time.time()
+prevTime=currTime
+timePast=currTime-prevTime
 #hyperChargeTime is the seconds it takes to fully charge bar
 hyperChargeTime=7
 def eventLoop():
-    global projectiles, currentWeapon,invulnTime, uniqueId, weaponPrevTimes, homeScreen,running,prevTime,is_key_pressed,hyperCharge
+    global projectiles, currentWeapon,invulnTime, uniqueId, weaponPrevTimes, homeScreen,running,prevTime,is_key_pressed,hyperCharge,timePast
     pygame.key.set_repeat(50,50)
     pygame.display.init()
     keyCheck=0.01
@@ -695,7 +698,7 @@ def eventLoop():
                     currTime=time.time()
                     minSpray,maxSpray=(0,0)
                     projectileSpeed = 0.002
-                    recoil=0.015
+                    recoil=1250
                     if currTime-weaponPrevTimes[currentWeapon]>=Reload and time.time()-invulnTime>invulnLength:
 
                       weapon0Sound.stop()
@@ -751,7 +754,7 @@ def eventLoop():
           if playerShip.rect.y + playerShip.rect.height < 0:
               playerShip.rect.y = screenHeight
 
-
+      deltaFriction = math.pow(fluidFriction,timePast)
       playerShip.xVel=playerShip.xVel*fluidFriction
       playerShip.yVel=playerShip.yVel*fluidFriction
       playerShip.rect.x += playerShip.xVel
@@ -767,7 +770,7 @@ points=0
 textPoints = font.render(f'Points: {points}', True, textColor, None)
 
 def proj_thread():
-  global projectiles,running,asteroids,projExplosions,AstNum,points,textPoints,astPrevTimes,homeScreen
+  global projectiles,running,asteroids,projExplosions,AstNum,points,textPoints,astPrevTimes,homeScreen,invulnDrawTimer, invulnTime
   while running:
     while homeScreen==False:
 
@@ -802,8 +805,9 @@ def proj_thread():
         if math.sqrt((proj.shotCoordx*proj.shotCoordx)+(proj.shotCoordy*proj.shotCoordy))>=proj.Range:
           keysToRmv.append(projKey)
         astLock.acquire()
-        combinedDict=astList | tempAsts
-        for astKey,ast in combinedDict.items():
+        tempDict=astList.copy()
+        tempDict.update(tempAsts)
+        for astKey,ast in tempDict.items():
           if ast.rect.colliderect(proj.rect,5,5): #5 is ast.image.get_rect().width-ast.rect.width
             if proj.Type==0:
               proj.explX=proj.rect.x-10
@@ -814,10 +818,10 @@ def proj_thread():
             keysToRmv.append(projKey)
             if ast.health<=0:
               stage=ast.stage
-              points+=(stage*50)
+              points+=(stage*25)
               textPoints = font.render(f'Points: {points}', True, textColor, None)
               astToRmv.append(astKey)        
-              splitAst.append(ast)
+              splitAst.append(ast)        
         astLock.release()
 
       for key in keysToRmv:
@@ -835,51 +839,9 @@ def proj_thread():
         splitAsteroid(i)
 
       if len(astList)==0 and homeScreen == False:
-        for i in range(math.floor(points/150)):
-          w,h=random.randint(60, 80),random.randint(60, 80)
-          while abs(w-h) > 22:
-            w,h=random.randint(60, 80),random.randint(60, 80)
-          choose=random.randint(0,1)
-          astSpeed=5
-          Min,Max=-1,1
-
-          if choose == 0:
-            xpos=random.randint(0,1)
-            if xpos==0:
-              x=0-w
-              xstep=round(random.uniform(0,1),2)*astSpeed
-              ystep=round(random.uniform(Min,Max),2)*astSpeed
-              while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
-                xstep=round(random.uniform(0,1),2)*astSpeed
-                ystep=round(random.uniform(Min,Max),2)*astSpeed
-            if xpos==1:
-              x=screenWidth
-              xstep=round(random.uniform(-1,0),2)*astSpeed
-              ystep=round(random.uniform(Min,Max),2)*astSpeed
-              while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
-                xstep=round(random.uniform(-1,0),2)*astSpeed
-                ystep=round(random.uniform(Min,Max),2)*astSpeed
-            y=random.randint(0,screenHeight)
-          if choose == 1:
-            ypos=random.randint(0,1)
-            if ypos==0:
-              y=0-h
-              ystep=round(random.uniform(0,1),2)*astSpeed
-              xstep=round(random.uniform(Min,Max),2)*astSpeed
-              while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
-                ystep=round(random.uniform(0,1),2)*astSpeed
-                xstep=round(random.uniform(Min,Max),2)*astSpeed
-            if ypos==1:
-              y=screenHeight
-              ystep=round(random.uniform(-1,0),2)*astSpeed
-              xstep=round(random.uniform(Min,Max),2)*astSpeed
-              while math.sqrt(xstep*xstep+ystep*ystep)<1.5:
-                ystep=round(random.uniform(-1,0),2)*astSpeed
-                xstep=round(random.uniform(Min,Max),2)*astSpeed
-            x=random.randint(0,screenHeight)
-            createAsteroid(x,y,w,h,xstep,ystep,1)
-
-        
+        createAsteroids(math.floor(points/200))
+        invulnTime=time.time()
+        invulnDrawTimer=time.time()
       time.sleep(0.06)
 
 
@@ -929,10 +891,7 @@ def render():
     for key, List in keyList.items():     #keeps draw order for temp asts
       for i in List:
         screen.blit(i.image, i.rect.toPygame())
-        pygame.draw.rect(screen,white,i.rect.toPygame())
 
-
-    
     #projectiles
     projectilesLock.acquire()
     for key, proj in projectiles.items():
