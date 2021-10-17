@@ -129,6 +129,8 @@ def event():
                     pieceX=0
                 if pieceX in Pieces[pieceY].keys():
                     pieceSelected = Pieces[pieceY][pieceX]
+                    pieceSelected.x=(pygame.mouse.get_pos()[0]-50)/100
+                    pieceSelected.y=(pygame.mouse.get_pos()[1]-50)/100
                     print(pieceSelected,"coords:",pieceX,pieceY)
                     movePiece=True
                 else:
