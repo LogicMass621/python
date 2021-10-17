@@ -108,9 +108,10 @@ print(Pieces)
 images={0:[wPawn,bPawn],1:[wKing,bKing],2:[wQueen,bQueen],3:[wKnight,bKnight],4:[wRook,bRook],5:[wBishop,bBishop]}
 movePiece=False
 PiecesLock=threading.Lock()
-
+#placeholder piece
+pieceSelected=0
 def event():
-    global Pieces, movePiece,running
+    global Pieces, movePiece,running,pieceSelected
     while running:
         events = pygame.event.get()
         for event in events:
@@ -153,6 +154,7 @@ def event():
                 else:
                     pieceSelected.y=0
                 Pieces[pieceSelected.y][pieceSelected.x]=pieceSelected
+                pieceSelected=0
                 PiecesLock.release()
             time.sleep(0.01)
 
@@ -166,6 +168,9 @@ def render():
     for column,pieces in Pieces.items():
         for row,piece in pieces.items():
             screen.blit(images[piece.Type][piece.color],(piece.x*100,piece.y*100))
+    if pieceSelected!=0:
+        print(pieceSelected)
+        screen.blit(images[pieceSelected.Type][pieceSelected.color],(pieceSelected.x*100,pieceSelected.y*100))
     PiecesLock.release()
     pygame.display.flip()
 
