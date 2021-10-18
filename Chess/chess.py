@@ -3,6 +3,7 @@ import pygame
 import sys
 import threading
 import time
+import math
 
 #changes name of terminal window
 sys.stdout.write("\x1b]2;Chess\x07")
@@ -110,6 +111,43 @@ movePiece=False
 PiecesLock=threading.Lock()
 #placeholder piece
 pieceSelected=0
+
+def legalMove(targetX,targetY,pieceSelected,pieceX,pieceY):
+    #Rook cuz easiest
+    piecesList=[]
+    if pieceSelected.Type==4:
+        if ((targetY==pieceY+1 or targetY==pieceY-1) and targetX==pieceX) or ((targetX==pieceX-1 or targetX==pieceX+1) and targetY==pieceY):
+            return True
+        if targetY==pieceY:
+            if targetX>pieceX:
+                for xCoords in Pieces[targetY]:
+                    if xCoords>pieceX and xCoords<targetX:
+                        return False
+            if pieceX>targetX:
+                for xCoords in Pieces[targetY]:
+                    if xCoords<pieceX and xCoords>targetX:
+                        return False
+        elif targetX==pieceX:
+            for column,row in Pieces.items():
+                print(Pieces)
+                for pieceXCoord,piece in Pieces[column].items():
+                    if pieceXCoord==targetX and pieceXCoord==pieceX:
+                        piecesList.append(piece.y)
+            print(piecesList,pieceY,targetY)
+            if targetY>pieceY:
+                for pieceYCoord in piecesList:
+                    print(pieceYCoord,pieceY,targetY)
+                    if pieceYCoord>pieceY and pieceYCoord<targetY:
+                        return False
+                        print("no")
+            if targetY<pieceY:
+                for pieceYCoord in piecesList:
+                    if pieceYCoord<pieceY and pieceYCoord>targetY:
+                        return False
+                        print("no2")
+        if targetY!=pieceY and targetX!=pieceX:
+            return False
+    return True
 def event():
     global Pieces, movePiece,running,pieceSelected
     while running:
@@ -130,6 +168,8 @@ def event():
                     pieceX=0
                 if pieceX in Pieces[pieceY].keys():
                     pieceSelected = Pieces[pieceY][pieceX]
+                    print(Pieces[pieceY])
+                    Pieces[pieceY].pop(pieceX)
                     pieceSelected.x=(pygame.mouse.get_pos()[0]-50)/100
                     pieceSelected.y=(pygame.mouse.get_pos()[1]-50)/100
                     print(pieceSelected,"coords:",pieceX,pieceY)
@@ -142,18 +182,38 @@ def event():
 
             if event.type==pygame.MOUSEBUTTONUP and event.button==1 and movePiece==True:
                 movePiece=False
-                print(Pieces[pieceY][pieceX])
-                PiecesLock.acquire()
-                Pieces[pieceY].pop(pieceX)
+                #finding target square
                 if len(str(pygame.mouse.get_pos()[0]))>=3:
-                    pieceSelected.x=int(str(pygame.mouse.get_pos()[0])[0])
+                    targetX=int(str(pygame.mouse.get_pos()[0])[0])
                 else:
-                    pieceSelected.x=0
+                    targetX=0
                 if len(str(pygame.mouse.get_pos()[1]))>=3:
-                    pieceSelected.y=int(str(pygame.mouse.get_pos()[1])[0])
+                    targetY=int(str(pygame.mouse.get_pos()[1])[0])
                 else:
-                    pieceSelected.y=0
-                Pieces[pieceSelected.y][pieceSelected.x]=pieceSelected
+                    targetY=0
+                PiecesLock.acquire()
+                #check to see if legal move
+                if legalMove(targetX,targetY,pieceSelected,pieceX,pieceY):
+                    if targetX in Pieces[targetY].keys(): #check to see if capture
+                        if Pieces[targetY][targetX].color==pieceSelected.color:
+                            print("same")
+                            pieceSelected.x=pieceX
+                            pieceSelected.y=pieceY
+                            Pieces[pieceY][pieceX]=pieceSelected
+                        else:
+                            print("else")
+                            Pieces[targetY].pop(targetX)
+                            Pieces[targetY][targetX]=pieceSelected
+                            pieceSelected.x=targetX
+                            pieceSelected.y=targetY
+                    else: #no piece on new square
+                        Pieces[targetY][targetX]=pieceSelected
+                        pieceSelected.x=targetX
+                        pieceSelected.y=targetY
+                else: #not legal move
+                    pieceSelected.x=pieceX
+                    pieceSelected.y=pieceY
+                    Pieces[pieceY][pieceX]=pieceSelected
                 pieceSelected=0
                 PiecesLock.release()
             time.sleep(0.01)
