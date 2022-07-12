@@ -321,6 +321,7 @@ def rot_center(image, angle):
 
 shipWidth=30
 shipHeight=38
+shipIcon = pygame.image.load("assets/images/shipIcon.png")
 shipImage = pygame.transform.scale(pygame.image.load("assets/images/ship.png"),(shipWidth,shipHeight))
 invulnShipImage=pygame.transform.scale(pygame.image.load("assets/images/invulnShip.png"),(shipWidth,shipHeight))
 shipRotation = 5
@@ -343,7 +344,7 @@ shipRect = Rect(shipX, shipY, shipWidth, shipHeight)
 playerShip = Ship(0,0,0,0,0,0)
 playerShip.rect=shipRect
 playerShip.rotSpeed=0
-playerShip.health=1000
+playerShip.health=5
 playerShip.xVel=0
 playerShip.yVel=0
 playerShip.angle=0
@@ -477,15 +478,14 @@ def splitAsteroid(ast):
 createAsteroids(AstNum)
 
 white=(255,255,255)
-textHealth=font.render(f'Health: {playerShip.health}', True, textColor
-, None)
+
 highestScore=0
 highestScoreText=font.render(f'Highest Score: {highestScore}',True,white,None)
 invulnTime=time.time()
 tempAsts={}
 tempAstRmv=[]
 def asteroidThread():
-    global running,projectiles,tempAstRmv, astTimer,astPrevTimes,homeScreen,invulnTime,points,invulnDrawTimer,points,textPoints,textHealth
+    global running,projectiles,tempAstRmv, astTimer,astPrevTimes,homeScreen,invulnTime,points,invulnDrawTimer,points,textPoints
     while running:
       if homeScreen==False:
         roundedAngle=(2.5*round(playerShip.angle/2.5))%360
@@ -503,10 +503,9 @@ def asteroidThread():
             shipRect=Rect(playerShip.rect.x-ships[roundedAngle].get_width()/2,playerShip.rect.y-ships[roundedAngle].get_height()/2,ships[roundedAngle].get_width(),ships[roundedAngle].get_height())
             if ast.rect.colliderect(shipRect,5,5) and time.time()-invulnTime>invulnLength:
               invulnDrawTimer=time.time()
-              playerShip.health -=round(250*1/ast.stage) 
+              playerShip.health -=1
               points+=ast.stage*50
               textPoints = font.render(f'Points: {points}', True, textColor, None)
-              textHealth=font.render(f'Health: {playerShip.health}', True, textColor, None)
               invulnTime=time.time()
               shipRect = Rect(shipX, shipY, shipWidth, shipHeight)
               playerShip.rect=shipRect
@@ -561,7 +560,6 @@ def asteroidThread():
               playerShip.health -=round(250*1/ast.stage) 
               points+=ast.stage*50
               textPoints = font.render(f'Points: {points}', True, textColor, None)
-              textHealth=font.render(f'Health: {playerShip.health}', True, textColor, None)
               invulnTime=time.time()
               shipRect = Rect(shipX, shipY, shipWidth, shipHeight)
               playerShip.rect=shipRect
@@ -605,7 +603,7 @@ ast_thread.start()
 #=====================================================
 
 def home_screen():
-  global homeScreen, astList, projectiles,points,astPrevTimes,textHealth,uniqueId,uniqueId2,textPoints,highestScore,highestScoreText,hyperCharge
+  global homeScreen, astList, projectiles,points,astPrevTimes,uniqueId,uniqueId2,textPoints,highestScore,highestScoreText,hyperCharge
   astLock.acquire()
   projectilesLock.acquire()
   uniqueId2=0
@@ -621,7 +619,6 @@ def home_screen():
   playerShip.rect=shipRect
   playerShip.rotSpeed=0
   playerShip.health=1000
-  textHealth=font.render(f'Health: {playerShip.health}',True, textColor, None)
   playerShip.xVel=0
   playerShip.yVel=0
   playerShip.angle=0
@@ -838,23 +835,24 @@ def proj_thread():
           projectiles.pop(key)
       projectilesLock.release()
 
-      astLock.acquire()
       for key in astToRmv:
-        astList.pop(key)
+        if key in astList:
+          astLock.acquire()
+          astList.pop(key)
+          astLock.release()
         if key in tempAsts:
           tempAsts.pop(key)
-      astLock.release()
       for i in splitAst:
         splitAsteroid(i)
 
       if len(astList)==0 and homeScreen == False:
-        astNum+=1
+        AstNum+=1
         createAsteroids(astNum)
         for astKey,ast in astList.items():
           astPrevTimes[astKey]=time.time()
         invulnTime=time.time()
         invulnDrawTimer=time.time()
-      time.sleep(0.06)
+      time.sleep(0.02)
 
 
 proj_thread = threading.Thread(target=proj_thread)
@@ -887,8 +885,8 @@ def render():
   if homeScreen==False:
 
     screen.blit(textPoints,(0,0))
-    screen.blit(textHealth,(screenWidth-textHealth.get_width(),0))
-
+    for i in range(playerShip.health):
+      screen.blit(shipIcon,Rect(screenWidth-(i+1)*30,0,30,38).toPygame());
     #asteroids
     keyList={}
     astLock.acquire()
